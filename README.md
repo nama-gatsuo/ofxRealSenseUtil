@@ -10,6 +10,6 @@ Wrapper and Utilities for RealSense SDK
 
 ## TODO
 * Mac compatibility
-* Auto copy dlls into `/bin`
-  Currently we have to copy and paste dll files into your `/bin` from RealSense original SDK manually.
+* Auto copy dlls into `/bin`  
+  Currently we have to copy and paste dll files into your `/bin` from RealSense original SDK manually.  
   `realsense2.dll` and `Intel.Realsense.dll` will be needed to compile.

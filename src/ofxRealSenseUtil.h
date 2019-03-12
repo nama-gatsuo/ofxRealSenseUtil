@@ -27,7 +27,7 @@ namespace ofxRealSenseUtil {
 		}
 
 		void update() {
-			ofLogNotice() << "pay: " << payload.depthLimit;
+			
 			request.send(payload);
 
 			isNewFrame = false;
@@ -187,13 +187,12 @@ namespace ofxRealSenseUtil {
 
 			for (auto& v : vList) {
 				mesh.addVertex(v);
-				mesh.addColor(ofFloatColor(v.x, v.y, v.z));
 			}
-			//ofLogNotice() << "v: " << mesh.getNumVertices();
+			
 			for (int vi : iList) {
 				mesh.addIndex(vi);
 			}
-			//ofLogNotice() << "i: " << mesh.getNumIndices();
+			
 		}
 
 		struct FrameData {
