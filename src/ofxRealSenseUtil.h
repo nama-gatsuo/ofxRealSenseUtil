@@ -8,22 +8,29 @@
 
 namespace ofxRealSenseUtil {
 
+	enum MeshMode { POLYGON, POINTCLOUD };
+
 	class Interface : public ofThread {
 	public:
-		enum MeshMode { POLYGON, POINTCLOUD };
 
 		Interface() : isNewFrame(true) {
 			payload = { 10, POLYGON, 2. };
 
-			startThread();
-			pipe.start();
-
+			rs2::context ctx;
+			auto& list = ctx.query_devices(); // Get a snapshot of currently connected devices
+			if (list.size() == 0) {
+				throw std::runtime_error("No device detected. Is it plugged in?");
+			} else {
+				startThread();
+				pipe.start();
+			}
 		}
 
 		~Interface() {
 			request.close();
 			complete.close();
 			waitForThread(true);
+			pipe.stop();
 		}
 
 		void update() {
@@ -83,7 +90,6 @@ namespace ofxRealSenseUtil {
 				default:
 					break;
 				}
-
 
 				newFd.pixels.setFromPixels(
 					(unsigned char *)video.get_data(),
