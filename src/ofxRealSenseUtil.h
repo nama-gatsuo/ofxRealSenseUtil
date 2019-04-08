@@ -19,7 +19,7 @@ namespace ofxRealSenseUtil {
 			rs2::context ctx;
 			auto& list = ctx.query_devices(); // Get a snapshot of currently connected devices
 			if (list.size() == 0) {
-				throw std::runtime_error("No device detected. Is it plugged in?");
+				//throw std::runtime_error("No device detected. Is it plugged in?");
 			} else {
 				startThread();
 				pipe.start();
@@ -95,7 +95,7 @@ namespace ofxRealSenseUtil {
 					(unsigned char *)video.get_data(),
 					video.get_width(), video.get_height(), OF_IMAGE_COLOR
 				);
-
+				
 				complete.send(std::move(newFd));
 			}
 

@@ -62,7 +62,4 @@ common:
 
 vs:
 	ADDON_INCLUDES += "$(PROGRAMFILES)/Intel RealSense SDK 2.0/include/"
-	ADDON_INCLUDES += "$(PROGRAMFILES)/Intel RealSense SDK 2.0/bin/$(Platform)/"
 	ADDON_LIBS += "$(PROGRAMFILES)/Intel RealSense SDK 2.0/lib/$(Platform)/realsense2.lib"
-	ADDON_DLLS_TO_COPY += Intel.Realsense.dll
-	ADDON_DLLS_TO_COPY += realsense2.dll
