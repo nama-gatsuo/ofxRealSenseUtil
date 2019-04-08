@@ -19,7 +19,7 @@ meta:
 	ADDON_DESCRIPTION = Addon for RealSense
 	ADDON_AUTHOR = Ayumu Nagamatsu
 	ADDON_TAGS = realsense
-	ADDON_URL = http://github.com/openframeworks/openFrameworks
+	ADDON_URL = https://github.com/nama-gatsuo/ofxRealSenseUtil
 
 common:
 	# dependencies with other addons, a list of them separated by spaces
