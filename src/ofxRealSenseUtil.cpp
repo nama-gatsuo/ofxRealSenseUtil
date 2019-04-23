@@ -216,7 +216,7 @@ const ofImage& Interface::getColorImage() const {
 	}
 	return colorImage;
 }
-const ofImage& Interface::getDepthImage() const {
+const ofFloatImage& Interface::getDepthImage() const {
 	if (!checkFlags(USE_DEPTH_TEXTURE)) {
 		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
 	}

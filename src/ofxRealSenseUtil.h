@@ -32,7 +32,7 @@ namespace ofxRealSenseUtil {
 		bool checkFlags(unsigned char f) const { return (flags & f) != 0; }
 
 		const ofImage& getColorImage() const;
-		const ofImage& getDepthImage() const;
+		const ofFloatImage& getDepthImage() const;
 		const ofVboMesh& getPointCloud() const;
 		const ofVboMesh& getPolygonMesh() const;
 
@@ -68,7 +68,7 @@ namespace ofxRealSenseUtil {
 		ofVboMesh meshPointCloud;
 		ofVboMesh meshPolygon;
 		ofImage colorImage;
-		ofImage depthImage;
+		ofFloatImage depthImage;
 		bool isNewFrame;
 
 		// unsignd char has 8 bits so it can have 8 falgs.
