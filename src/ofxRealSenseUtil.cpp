@@ -43,7 +43,9 @@ void Interface::update() {
 	if (isNewFrame) {
 		if (checkFlags(USE_COLOR_TEXTURE)) colorImage.setFromPixels(fd.colorPix);
 		if (checkFlags(USE_DEPTH_TEXTURE)) depthImage.setFromPixels(fd.depthPix);
-		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) meshPointCloud = fd.meshPointCloud;
+		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD) || checkFlags(USE_DEPTH_MESH_POINTCLOUD_COLOR)) {
+			meshPointCloud = fd.meshPointCloud;
+		}
 		if (checkFlags(USE_DEPTH_MESH_POLYGON)) meshPolygon = fd.meshPolygon;
 	}
 
@@ -56,37 +58,39 @@ void Interface::threadedFunction() {
 		FrameData newFd;
 		auto& frames = pipe.wait_for_frames();
 		auto& depth = frames.get_depth_frame();
-		auto& video = frames.get_color_frame();
+		auto& color = frames.get_color_frame();
+		pc.map_to(color);
 		auto& points = pc.calculate(depth);
+		
 
 		if (checkFlags(USE_COLOR_TEXTURE)) {
 			newFd.colorPix.setFromPixels(
-				(unsigned char *)video.get_data(),
-				video.get_width(), video.get_height(), OF_IMAGE_COLOR
+				(unsigned char *)color.get_data(),
+				color.get_width(), color.get_height(), OF_IMAGE_COLOR
 			);
 		}
 		if (checkFlags(USE_DEPTH_TEXTURE)) {
 			newFd.depthPix.setFromPixels(
-				(unsigned char *)depth.get_data(),
+				(float *)points.get_vertices(),
 				depth.get_width(), depth.get_height(), OF_IMAGE_COLOR
 			);
 		}
 		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
-			createPointCloud(newFd.meshPointCloud, points, depthZLimit.get(), depthPixelSize.get());
+			createPointCloud(newFd.meshPointCloud, points, depthZLimit.get(), depthPixelSize.get(), false);
+		}
+		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD_COLOR)) {
+			createPointCloud(newFd.meshPointCloud, points, depthZLimit.get(), depthPixelSize.get(), true);
 		}
 		if (checkFlags(USE_DEPTH_MESH_POLYGON)) {
-			
 			createMesh(newFd.meshPolygon, points, depthZLimit.get(), depthPixelSize.get());
-			ofLogNotice() << "num: " << newFd.meshPolygon.getNumVertices();
-			
 		}
-
+		
 		complete.send(std::move(newFd));
 	}
 
 }
 
-void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize) {
+void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize, bool useColor) {
 
 	mesh.clear();
 
@@ -95,13 +99,28 @@ void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, float dept
 
 	const int w = rsDepthRes.x;
 	const int h = rsDepthRes.y;
+	
+	if (useColor) {
+		auto texCoords = ps.get_texture_coordinates();
+		for (int y = 0; y < h - pixelSize; y += pixelSize) {
+			for (int x = 0; x < w - pixelSize; x += pixelSize) {
+				int i = y * w + x;
+				const auto& v = vs[i];
+				const auto& uv = texCoords[i];
 
-	for (int y = 0; y < h - pixelSize; y += pixelSize) {
-		for (int x = 0; x < w - pixelSize; x += pixelSize) {
-			int i = y * w + x;
-			const auto& v = vs[i];
-			if (isinf(v.z) || v.z > depthLimit || v.z < 0.1) continue;
-			mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
+				if (isinf(v.z) || v.z > depthLimit || v.z < 0.1) continue;
+				mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
+				mesh.addTexCoord(glm::vec2(uv.u, uv.v));
+			}
+		}
+	} else {
+		for (int y = 0; y < h - pixelSize; y += pixelSize) {
+			for (int x = 0; x < w - pixelSize; x += pixelSize) {
+				int i = y * w + x;
+				const auto& v = vs[i];
+				if (isinf(v.z) || v.z > depthLimit || v.z < 0.1) continue;
+				mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
+			}
 		}
 	}
 
@@ -189,4 +208,29 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit
 	for (int vi : iList) {
 		mesh.addIndex(vi);
 	}
+}
+
+const ofImage& Interface::getColorImage() const {
+	if (!checkFlags(USE_COLOR_TEXTURE)) {
+		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
+	}
+	return colorImage;
+}
+const ofImage& Interface::getDepthImage() const {
+	if (!checkFlags(USE_DEPTH_TEXTURE)) {
+		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
+	}
+	return depthImage;
+}
+const ofVboMesh& Interface::getPointCloud() const {
+	if (!checkFlags(USE_DEPTH_MESH_POINTCLOUD) && !checkFlags(USE_DEPTH_MESH_POINTCLOUD_COLOR)) {
+		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
+	}
+	return meshPointCloud;
+}
+const ofVboMesh& Interface::getPolygonMesh() const {
+	if (!checkFlags(USE_DEPTH_MESH_POLYGON)) {
+		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
+	}
+	return meshPolygon;
 }

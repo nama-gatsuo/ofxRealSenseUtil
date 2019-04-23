@@ -15,7 +15,8 @@ namespace ofxRealSenseUtil {
 		USE_COLOR_TEXTURE = (1 << 0),
 		USE_DEPTH_TEXTURE = (1 << 1),
 		USE_DEPTH_MESH_POINTCLOUD = (1 << 2),
-		USE_DEPTH_MESH_POLYGON = (1 << 3),
+		USE_DEPTH_MESH_POINTCLOUD_COLOR = (1 << 3),
+		USE_DEPTH_MESH_POLYGON = (1 << 4)
 	}; 
 
 	class Interface : public ofThread {
@@ -30,30 +31,10 @@ namespace ofxRealSenseUtil {
 		void disableFlags(unsigned char f) { flags &= ~f; }
 		bool checkFlags(unsigned char f) const { return (flags & f) != 0; }
 
-		const ofImage& getColorImage() const {
-			if (!checkFlags(USE_COLOR_TEXTURE)) {
-				ofLogError("ofxRealSenseUtil") << "Use flag is disabled!";
-			}
-			return colorImage;
-		}
-		const ofImage& getDepthImage() const {
-			if (!checkFlags(USE_DEPTH_TEXTURE)) {
-				ofLogError("ofxRealSenseUtil") << "Use flag is disabled!";
-			}
-			return depthImage;
-		}
-		const ofVboMesh& getPointCloud() const {
-			if (!checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
-				ofLogError("ofxRealSenseUtil") << "Use flag is disabled!";
-			}
-			return meshPointCloud;
-		}
-		const ofVboMesh& getPolygonMesh() const {
-			if (!checkFlags(USE_DEPTH_MESH_POLYGON)) {
-				ofLogError("ofxRealSenseUtil") << "Use flag is disabled!";
-			}
-			return meshPolygon;
-		}
+		const ofImage& getColorImage() const;
+		const ofImage& getDepthImage() const;
+		const ofVboMesh& getPointCloud() const;
+		const ofVboMesh& getPolygonMesh() const;
 
 		void setDepthLimit(float d) { depthZLimit.set(d); }
 		void setDepthRes(int p) { depthPixelSize.set(p); }
@@ -62,13 +43,13 @@ namespace ofxRealSenseUtil {
 	private:
 		void threadedFunction() override;
 		
-		void createPointCloud(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize);
+		void createPointCloud(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize, bool useColor);
 		void createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize);
 
 		struct FrameData {
 			ofMesh meshPointCloud;
 			ofMesh meshPolygon;
-			ofPixels depthPix;
+			ofFloatPixels depthPix;
 			ofPixels colorPix;
 		} fd;
 
