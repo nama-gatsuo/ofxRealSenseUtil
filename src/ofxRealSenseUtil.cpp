@@ -9,6 +9,7 @@ Interface::Interface() : isNewFrame(true), flags(0) {
 	auto& list = ctx.query_devices(); // Get a snapshot of currently connected devices
 	if (list.size() == 0) {
 		//throw std::runtime_error("No device detected. Is it plugged in?");
+		ofLogWarning("ofxRealSenseUtil") << "No device detected. Is realsense plugged in?";
 	} else {
 		startThread();
 		pipe.start();
@@ -74,7 +75,10 @@ void Interface::threadedFunction() {
 			createPointCloud(newFd.meshPointCloud, points, depthZLimit.get(), depthPixelSize.get());
 		}
 		if (checkFlags(USE_DEPTH_MESH_POLYGON)) {
+			
 			createMesh(newFd.meshPolygon, points, depthZLimit.get(), depthPixelSize.get());
+			ofLogNotice() << "num: " << newFd.meshPolygon.getNumVertices();
+			
 		}
 
 		complete.send(std::move(newFd));
@@ -112,6 +116,11 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit
 
 	const int w = rsDepthRes.x;
 	const int h = rsDepthRes.y;
+
+	ofLogNotice() << w;
+	ofLogNotice() << h;
+	ofLogNotice() << depthLimit;
+	ofLogNotice() << pixelSize;
 
 	// list of index of depth map(x-y) - vNum
 	std::map<int, int> vMap;
@@ -171,5 +180,13 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit
 				iList.push_back(vMap[index[3]]);
 			}
 		}
+	}
+
+	for (auto& v : vList) {
+		mesh.addVertex(v);
+	}
+
+	for (int vi : iList) {
+		mesh.addIndex(vi);
 	}
 }

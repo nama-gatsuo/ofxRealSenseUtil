@@ -38,18 +38,16 @@ void ofApp::setup() {
 	cam.setNearClip(0.);
 	cam.setFarClip(3000.);
 
-	panel.setup();
-	panel.add(lim.set("limit", 2., 0.1, 5.));
-	panel.add(res.set("res", 2, 1, 100));
-
 	rs = std::make_shared<ofxRealSenseUtil::Interface>();
+	rs->enableFlags(ofxRealSenseUtil::USE_DEPTH_MESH_POLYGON);
+
+	panel.setup();
+	panel.add(rs->getParameters());
+
 }
 
 void ofApp::update() {
-	rs->setDepthLimit(lim.get());
-	rs->setDepthRes(res.get());
 	rs->update();
-	
 }
 
 void ofApp::draw() {
@@ -62,7 +60,7 @@ void ofApp::draw() {
 		ofPushMatrix();
 		ofScale(500.);
 		ofTranslate(0, 0, 1.);
-		rs->getPointCloud().draw();
+		rs->getPolygonMesh().draw();
 		ofPopMatrix();
 
 		shader.end();
