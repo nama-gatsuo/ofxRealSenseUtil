@@ -4,11 +4,19 @@
 #include "ofImage.h"
 #include "ofThread.h"
 #include "ofThreadChannel.h"
+#include "ofParameter.h"
 #include <map>
 
 namespace ofxRealSenseUtil {
 
-	enum MeshMode { POLYGON, POINTCLOUD };
+	const static glm::ivec2 rsDepthRes(1280, 720);
+
+	enum UseFlag {
+		USE_COLOR_TEXTURE = (1 << 0),
+		USE_DEPTH_TEXTURE = (1 << 1),
+		USE_DEPTH_MESH_POINTCLOUD = (1 << 2),
+		USE_DEPTH_MESH_POLYGON = (1 << 3),
+	}; 
 
 	class Interface : public ofThread {
 	public:
@@ -18,19 +26,38 @@ namespace ofxRealSenseUtil {
 
 		void update();
 
-		const ofImage& getVideo() const {
+		void enableFlags(unsigned char f) { flags |= f; }
+		void disableFlags(unsigned char f) { flags &= ~f; }
+		bool checkFlags(unsigned char f) const { return (flags & f) != 0; }
+
+		const ofImage& getColorImage() const {
+			if (!checkFlags(USE_COLOR_TEXTURE)) {
+				ofLogError("ofxRealSenseUtil") << "Use flag is disabled!";
+			}
 			return colorImage;
 		}
-		const ofVboMesh& getMesh() const {
-			return mesh;
+		const ofImage& getDepthImage() const {
+			if (!checkFlags(USE_DEPTH_TEXTURE)) {
+				ofLogError("ofxRealSenseUtil") << "Use flag is disabled!";
+			}
+			return depthImage;
 		}
-		void setDepthLimit(float d) {
-			payload.depthLimit = d;
+		const ofVboMesh& getPointCloud() const {
+			if (!checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
+				ofLogError("ofxRealSenseUtil") << "Use flag is disabled!";
+			}
+			return meshPointCloud;
 		}
-		void setDepthRes(int p) {
-			payload.pixelSize = p;
+		const ofVboMesh& getPolygonMesh() const {
+			if (!checkFlags(USE_DEPTH_MESH_POLYGON)) {
+				ofLogError("ofxRealSenseUtil") << "Use flag is disabled!";
+			}
+			return meshPolygon;
 		}
 
+		void setDepthLimit(float d) { depthZLimit.set(d); }
+		void setDepthRes(int p) { depthPixelSize.set(p); }
+		ofParameterGroup& getParameters() { return rsParams; }
 
 	private:
 		void threadedFunction() override;
@@ -39,25 +66,35 @@ namespace ofxRealSenseUtil {
 		void createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize);
 
 		struct FrameData {
-			ofMesh mesh;
-			ofPixels pixels;
+			ofMesh meshPointCloud;
+			ofMesh meshPolygon;
+			ofPixels depthPix;
+			ofPixels colorPix;
 		} fd;
 
 		struct RequestPayload {
-			int pixelSize;
-			MeshMode mode;
-			float depthLimit;
+			unsigned char flags;
 		} payload;
+
+		ofParameterGroup rsParams;
+		ofParameterGroup depthMeshParams;
+		ofParameter<int> depthPixelSize;
+		ofParameter<float> depthZLimit;
 
 		rs2::pipeline pipe;
 		rs2::pointcloud pc;
 
-		ofVboMesh mesh;
+		ofVboMesh meshPointCloud;
+		ofVboMesh meshPolygon;
 		ofImage colorImage;
 		ofImage depthImage;
 		bool isNewFrame;
 
+		// unsignd char has 8 bits so it can have 8 falgs.
+		unsigned char flags; 
+
 		ofThreadChannel<RequestPayload> request;
 		ofThreadChannel<FrameData> complete;
+
 	};
 }

@@ -2,18 +2,24 @@
 
 using namespace ofxRealSenseUtil;
 
-Interface::Interface() : isNewFrame(true) {
-	payload = { 10, POLYGON, 2. };
+Interface::Interface() : isNewFrame(true), flags(0) {
+	payload.flags = flags;
 
 	rs2::context ctx;
 	auto& list = ctx.query_devices(); // Get a snapshot of currently connected devices
 	if (list.size() == 0) {
 		//throw std::runtime_error("No device detected. Is it plugged in?");
-	}
-	else {
+	} else {
 		startThread();
 		pipe.start();
 	}
+
+	rsParams.setName("ofxRealSenseUtil");
+	depthMeshParams.setName("depthMeshParams");
+	depthMeshParams.add(depthPixelSize.set("pixelSize", 3, 1, 10));
+	depthMeshParams.add(depthZLimit.set("depthZLimit(by meter)", 3., 0., 10.));
+	rsParams.add(depthMeshParams);
+
 }
 
 Interface::~Interface() {
@@ -34,8 +40,10 @@ void Interface::update() {
 	}
 
 	if (isNewFrame) {
-		colorImage.setFromPixels(fd.pixels);
-		mesh = fd.mesh;
+		if (checkFlags(USE_COLOR_TEXTURE)) colorImage.setFromPixels(fd.colorPix);
+		if (checkFlags(USE_DEPTH_TEXTURE)) depthImage.setFromPixels(fd.depthPix);
+		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) meshPointCloud = fd.meshPointCloud;
+		if (checkFlags(USE_DEPTH_MESH_POLYGON)) meshPolygon = fd.meshPolygon;
 	}
 
 }
@@ -43,7 +51,6 @@ void Interface::update() {
 void Interface::threadedFunction() {
 	RequestPayload pay;
 	while (request.receive(pay)) {
-		pay = payload;
 
 		FrameData newFd;
 		auto& frames = pipe.wait_for_frames();
@@ -51,21 +58,24 @@ void Interface::threadedFunction() {
 		auto& video = frames.get_color_frame();
 		auto& points = pc.calculate(depth);
 
-		switch (pay.mode) {
-		case POLYGON:
-			createMesh(newFd.mesh, points, pay.depthLimit, pay.pixelSize);
-			break;
-		case POINTCLOUD:
-			createPointCloud(newFd.mesh, points, pay.depthLimit, pay.pixelSize);
-			break;
-		default:
-			break;
+		if (checkFlags(USE_COLOR_TEXTURE)) {
+			newFd.colorPix.setFromPixels(
+				(unsigned char *)video.get_data(),
+				video.get_width(), video.get_height(), OF_IMAGE_COLOR
+			);
 		}
-
-		newFd.pixels.setFromPixels(
-			(unsigned char *)video.get_data(),
-			video.get_width(), video.get_height(), OF_IMAGE_COLOR
-		);
+		if (checkFlags(USE_DEPTH_TEXTURE)) {
+			newFd.depthPix.setFromPixels(
+				(unsigned char *)depth.get_data(),
+				depth.get_width(), depth.get_height(), OF_IMAGE_COLOR
+			);
+		}
+		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
+			createPointCloud(newFd.meshPointCloud, points, depthZLimit.get(), depthPixelSize.get());
+		}
+		if (checkFlags(USE_DEPTH_MESH_POLYGON)) {
+			createMesh(newFd.meshPolygon, points, depthZLimit.get(), depthPixelSize.get());
+		}
 
 		complete.send(std::move(newFd));
 	}
@@ -79,8 +89,8 @@ void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, float dept
 	const rs2::vertex * vs = ps.get_vertices();
 	int pNum = ps.size();
 
-	const int w = 1280;
-	const int h = 720;
+	const int w = rsDepthRes.x;
+	const int h = rsDepthRes.y;
 
 	for (int y = 0; y < h - pixelSize; y += pixelSize) {
 		for (int x = 0; x < w - pixelSize; x += pixelSize) {
@@ -100,8 +110,8 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit
 
 	const rs2::vertex * vs = ps.get_vertices();
 
-	const int w = 1280;
-	const int h = 720;
+	const int w = rsDepthRes.x;
+	const int h = rsDepthRes.y;
 
 	// list of index of depth map(x-y) - vNum
 	std::map<int, int> vMap;
