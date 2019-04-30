@@ -11,14 +11,20 @@ Interface::Interface() : isNewFrame(true), flags(0) {
 		//throw std::runtime_error("No device detected. Is it plugged in?");
 		ofLogWarning("ofxRealSenseUtil") << "No device detected. Is realsense plugged in?";
 	} else {
+		rs2::config cfg;
+		// Use a configuration object to request only depth from the pipeline
+		cfg.enable_stream(RS2_STREAM_DEPTH, rsDepthRes.x, rsDepthRes.y, RS2_FORMAT_Z16, 30);
+		cfg.enable_stream(RS2_STREAM_COLOR, rsColorRes.x, rsColorRes.y, RS2_FORMAT_RGB8, 30);
+		// Start streaming with the above configuration
+		pipe.start(cfg);
 		startThread();
-		pipe.start();
 	}
 
 	rsParams.setName("ofxRealSenseUtil");
+	rsParams.add(filters.getParameters());
+
 	depthMeshParams.setName("depthMeshParams");
-	depthMeshParams.add(depthPixelSize.set("pixelSize", 3, 1, 10));
-	depthMeshParams.add(depthZLimit.set("depthZLimit(by meter)", 3., 0., 10.));
+	depthMeshParams.add(depthPixelSize.set("pixelSize", 10, 1, 100));
 	rsParams.add(depthMeshParams);
 
 }
@@ -59,30 +65,34 @@ void Interface::threadedFunction() {
 		auto& frames = pipe.wait_for_frames();
 		auto& depth = frames.get_depth_frame();
 		auto& color = frames.get_color_frame();
+
 		pc.map_to(color);
-		auto& points = pc.calculate(depth);
+		filters.filter(depth);
 		
+		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
+
+		auto& points = pc.calculate(depth);
 
 		if (checkFlags(USE_COLOR_TEXTURE)) {
 			newFd.colorPix.setFromPixels(
-				(unsigned char *)color.get_data(),
+				(unsigned char*)color.get_data(),
 				color.get_width(), color.get_height(), OF_IMAGE_COLOR
 			);
 		}
 		if (checkFlags(USE_DEPTH_TEXTURE)) {
 			newFd.depthPix.setFromPixels(
 				(float *)points.get_vertices(),
-				depth.get_width(), depth.get_height(), OF_IMAGE_COLOR
+				depthRes.x, depthRes.y, OF_IMAGE_COLOR
 			);
 		}
 		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
-			createPointCloud(newFd.meshPointCloud, points, depthZLimit.get(), depthPixelSize.get(), false);
+			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get(), false);
 		}
 		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD_COLOR)) {
-			createPointCloud(newFd.meshPointCloud, points, depthZLimit.get(), depthPixelSize.get(), true);
+			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get(), true);
 		}
 		if (checkFlags(USE_DEPTH_MESH_POLYGON)) {
-			createMesh(newFd.meshPolygon, points, depthZLimit.get(), depthPixelSize.get());
+			createMesh(newFd.meshPolygon, points, depthRes, depthPixelSize.get());
 		}
 		
 		complete.send(std::move(newFd));
@@ -90,15 +100,17 @@ void Interface::threadedFunction() {
 
 }
 
-void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize, bool useColor) {
+void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelSize, bool useColor) {
+
+	if (!ps) return;
 
 	mesh.clear();
 
 	const rs2::vertex * vs = ps.get_vertices();
 	int pNum = ps.size();
 
-	const int w = rsDepthRes.x;
-	const int h = rsDepthRes.y;
+	const int w = res.x;
+	const int h = res.y;
 	
 	if (useColor) {
 		auto texCoords = ps.get_texture_coordinates();
@@ -108,7 +120,7 @@ void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, float dept
 				const auto& v = vs[i];
 				const auto& uv = texCoords[i];
 
-				if (isinf(v.z) || v.z > depthLimit || v.z < 0.1) continue;
+				if (!v.z) continue;
 				mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
 				mesh.addTexCoord(glm::vec2(uv.u, uv.v));
 			}
@@ -118,7 +130,7 @@ void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, float dept
 			for (int x = 0; x < w - pixelSize; x += pixelSize) {
 				int i = y * w + x;
 				const auto& v = vs[i];
-				if (isinf(v.z) || v.z > depthLimit || v.z < 0.1) continue;
+				if (!v.z) continue; continue;
 				mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
 			}
 		}
@@ -126,20 +138,17 @@ void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, float dept
 
 }
 
-void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize) {
+void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelSize) {
+
+	if (!ps) return;
 
 	mesh.clear();
 	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 
 	const rs2::vertex * vs = ps.get_vertices();
 
-	const int w = rsDepthRes.x;
-	const int h = rsDepthRes.y;
-
-	ofLogNotice() << w;
-	ofLogNotice() << h;
-	ofLogNotice() << depthLimit;
-	ofLogNotice() << pixelSize;
+	const int w = res.x;
+	const int h = res.y;
 
 	// list of index of depth map(x-y) - vNum
 	std::map<int, int> vMap;
@@ -163,7 +172,7 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit
 			for (int i = 0; i < 4; i++) {
 				const auto& v = vs[index[i]];
 				pos[i] = glm::vec3(v.x, -v.y, -v.z);
-				if (isinf(v.z) || v.z > depthLimit || v.z < 0.1) {
+				if (!v.z) {
 					eraseFlag[i] = true;
 					eraseCount++;
 				}

@@ -5,11 +5,13 @@
 #include "ofThread.h"
 #include "ofThreadChannel.h"
 #include "ofParameter.h"
+#include "PostProcessingFilter.h"
 #include <map>
 
 namespace ofxRealSenseUtil {
 
 	const static glm::ivec2 rsDepthRes(1280, 720);
+	const static glm::ivec2 rsColorRes(1280, 720);
 
 	enum UseFlag {
 		USE_COLOR_TEXTURE = (1 << 0),
@@ -36,15 +38,14 @@ namespace ofxRealSenseUtil {
 		const ofVboMesh& getPointCloud() const;
 		const ofVboMesh& getPolygonMesh() const;
 
-		void setDepthLimit(float d) { depthZLimit.set(d); }
 		void setDepthRes(int p) { depthPixelSize.set(p); }
 		ofParameterGroup& getParameters() { return rsParams; }
 
 	private:
 		void threadedFunction() override;
 		
-		void createPointCloud(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize, bool useColor);
-		void createMesh(ofMesh& mesh, const rs2::points& ps, float depthLimit, int pixelSize);
+		void createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelStep, bool useColor);
+		void createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelStep);
 
 		struct FrameData {
 			ofMesh meshPointCloud;
@@ -60,8 +61,8 @@ namespace ofxRealSenseUtil {
 		ofParameterGroup rsParams;
 		ofParameterGroup depthMeshParams;
 		ofParameter<int> depthPixelSize;
-		ofParameter<float> depthZLimit;
 
+		rs2::frame_queue frameQueue;
 		rs2::pipeline pipe;
 		rs2::pointcloud pc;
 
@@ -77,5 +78,6 @@ namespace ofxRealSenseUtil {
 		ofThreadChannel<RequestPayload> request;
 		ofThreadChannel<FrameData> complete;
 
+		PostProcessingFilters filters;
 	};
 }
