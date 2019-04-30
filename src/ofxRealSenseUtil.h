@@ -6,7 +6,7 @@
 #include "ofThreadChannel.h"
 #include "ofParameter.h"
 #include "PostProcessingFilter.h"
-#include <map>
+#include <unordered_map>
 
 namespace ofxRealSenseUtil {
 

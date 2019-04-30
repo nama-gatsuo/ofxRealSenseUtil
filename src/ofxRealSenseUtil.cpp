@@ -151,7 +151,7 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2
 	const int h = res.y;
 
 	// list of index of depth map(x-y) - vNum
-	std::map<int, int> vMap;
+	std::unordered_map<int, int> vMap;
 	std::vector<int> iList;
 	std::vector<glm::vec3> vList;
 
