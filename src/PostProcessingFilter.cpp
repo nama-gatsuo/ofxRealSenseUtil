@@ -16,7 +16,7 @@ FilterOptions::FilterOptions(const std::string& name, ofPtr<rs2::filter> filter)
 	};
 
 	group.setName(name);
-	group.add(isEnabled.set(false));
+	group.add(isEnabled.set("active", false));
 
 	//Go over each filter option and create a slider for it
 	for (rs2_option opt : possible_filter_options) {
