@@ -6,12 +6,13 @@ FilterOptions::FilterOptions(const std::string& name, ofPtr<rs2::filter> filter)
 	name(name), filter(filter)
 {
 
-	const std::array<rs2_option, 5> possible_filter_options = {
+	const std::array<rs2_option, 6> possible_filter_options = {
 		RS2_OPTION_FILTER_MAGNITUDE,
 		RS2_OPTION_FILTER_SMOOTH_ALPHA,
 		RS2_OPTION_MIN_DISTANCE,
 		RS2_OPTION_MAX_DISTANCE,
-		RS2_OPTION_FILTER_SMOOTH_DELTA
+		RS2_OPTION_FILTER_SMOOTH_DELTA,
+		RS2_OPTION_HOLES_FILL
 	};
 
 	group.setName(name);
