@@ -6,6 +6,7 @@ in vec2 texcoord; // oF Default
 out vec2 vTexCoord;
 
 void main(){
-    vTexCoord = texcoord;
-    gl_Position = modelViewProjectionMatrix * position;
+    vec2 p = position.xy * 2.;
+    vTexCoord = p;
+    gl_Position = modelViewProjectionMatrix * vec4(p, 0., 1.);
 }
