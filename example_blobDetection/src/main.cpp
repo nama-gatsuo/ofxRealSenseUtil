@@ -3,7 +3,7 @@
 int main() {
 	ofGLFWWindowSettings s;
 	s.setGLVersion(4, 5);
-	s.setSize(1280, 840);
+	s.setSize(1280, 720);
 	ofCreateWindow(s);
 	ofRunApp(new ofApp());
 }

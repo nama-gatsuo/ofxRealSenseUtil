@@ -3,6 +3,8 @@
 #include "ofxRealSenseUtil.h"
 #include "ofxOpenCv.h"
 #include "ofxGui.h"
+#include "ofxOsc.h"
+#include "RectBoarder.h"
 
 class ofApp : public ofBaseApp{
 public:
@@ -10,6 +12,7 @@ public:
 	void update();
 	void draw();
 	void keyPressed(int key);
+
 private:
 	ofxRealSenseUtil::Interface rs;
 	ofFbo binarized;
@@ -21,6 +24,13 @@ private:
 
 	ofxPanel panel;
 	ofParameter<float> zThres;
+	ofParameterGroup oscGroup;
+	ofParameter<bool> isDetectEnter;
+	ofParameter<bool> isDetectLeave;
+	ofxOscSender sender;
+	
+	RectBoarder rect;
+	std::vector<glm::ivec2> pos;
 
 	bool hasBlob;
 };
