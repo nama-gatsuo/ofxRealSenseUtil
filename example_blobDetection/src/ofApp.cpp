@@ -12,20 +12,14 @@ void ofApp::setup() {
 	
 	panel.setup();
 	panel.add(zThres.set("zThres", 1., 0.1, 5.));
-	panel.setPosition(640 + 20, 360 + 80);
-
-	oscGroup.setName("osc");
-	oscGroup.add(isDetectEnter.set("send_on_enter", true));
-	oscGroup.add(isDetectLeave.set("send_on_leave", true));
-	panel.add(oscGroup);
+	panel.add(state.getParameters());
 	panel.add(rs.getParameters());
 	panel.add(rect.getParameters());
+
+	panel.setPosition(640 + 20, 360 + 80);
 	panel.minimizeAll();
 	panel.loadFromFile("settings.xml");
 
-	hasBlob = false;
-
-	sender.setup("127.0.0.1", 5555);
 }
 
 void ofApp::update() {
@@ -56,32 +50,10 @@ void ofApp::update() {
 	binarizedImage.setFromPixels(pix);
 
 	// find blobs from cvImage
-	contourFinder.findContours(binarizedImage, 80, (640 * 360) / 4, 8, false);
+	contourFinder.findContours(binarizedImage, 120, (640 * 360) / 4, 8, false);
 	
-	if (contourFinder.nBlobs > 0) {
-		if (!hasBlob) {
-			ofLogNotice() << "Someone entered!";
-			if (isDetectEnter) {
-				ofxOscMessage msg;
-				msg.setAddress("/sensor/enter");
-				sender.sendMessage(msg);
-			}
-		}
-		hasBlob = true;
-	} else {
-		if (hasBlob) {
-			ofLogNotice() << "Someone leaved!";
-			if (isDetectLeave) {
-				ofxOscMessage msg;
-				msg.setAddress("/sensor/leave");
-				sender.sendMessage(msg);
-			}
-		}
-		hasBlob = false;
-	}
-	
-	
-	
+	bool hasBlob = contourFinder.nBlobs > 0;
+	state.update(hasBlob);
 }
 
 void ofApp::draw() {
@@ -99,17 +71,14 @@ void ofApp::draw() {
 	ofDrawBitmapStringHighlight("raw color", 2, 376);
 
 	ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate()), 640 + 20, 360 + 20);
-	if (hasBlob) {
+	if (state.get()) {
 		ofDrawBitmapStringHighlight("Detecting blob", 640 + 20, 360 + 40, ofColor(128, 128, 255));
 	}
 
 	rect.draw();
-
 	panel.draw();
 }
 
 void ofApp::keyPressed(int key) {
-	if (key == ' ') {
-		
-	}
+	
 }

@@ -4,6 +4,7 @@
 	<osc>
 		<send_on_enter>1</send_on_enter>
 		<send_on_leave>1</send_on_leave>
+		<ignore_duration>0.795918</ignore_duration>
 	</osc>
 	<ofxRealSenseUtil>
 		<Depth_filters>
@@ -38,7 +39,7 @@
 		</depthMeshParams>
 	</ofxRealSenseUtil>
 	<border>
-		<position>178, 108</position>
+		<position>141, 126</position>
 		<width>212</width>
 		<height>119</height>
 	</border>

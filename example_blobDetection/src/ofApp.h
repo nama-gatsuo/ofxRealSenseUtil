@@ -3,8 +3,8 @@
 #include "ofxRealSenseUtil.h"
 #include "ofxOpenCv.h"
 #include "ofxGui.h"
-#include "ofxOsc.h"
 #include "RectBorder.h"
+#include "StateWrapper.h"
 
 class ofApp : public ofBaseApp{
 public:
@@ -24,13 +24,9 @@ private:
 
 	ofxPanel panel;
 	ofParameter<float> zThres;
-	ofParameterGroup oscGroup;
-	ofParameter<bool> isDetectEnter;
-	ofParameter<bool> isDetectLeave;
-	ofxOscSender sender;
 	
 	RectBorder rect;
 	std::vector<glm::vec2> pos;
 
-	bool hasBlob;
+	StateWrapper state;
 };

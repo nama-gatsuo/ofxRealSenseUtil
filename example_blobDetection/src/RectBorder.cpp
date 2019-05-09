@@ -9,10 +9,6 @@ RectBorder::RectBorder() : activeIndex(-1) {
 	));
 	group.add(width.set("width", 100., 0., ofGetWidth()));
 	group.add(height.set("height", 100., 0., ofGetHeight()));
-	
-	/*pos.addListener(this, &RectBorder::updateCorners);
-	width.addListener(this, &RectBorder::updateCorners);
-	height.addListener(this, &RectBorder::updateCorners);*/
 
 	corners.assign(4, glm::vec2(0.));
 	updateCorners();
@@ -41,11 +37,16 @@ void RectBorder::draw() {
 	ofNoFill();
 	ofDrawRectangle(pos, width, height);
 	
-	ofSetColor(255, 0, 255);
-
-	ofSetColor(255, 128, 255);
-	for (auto& p : corners) {
-		ofDrawRectangle(p - glm::vec2(5), 10, 10);
+	for (int i = 0; i < 4; i++) {
+		if (i == activeIndex) {
+			ofFill();
+			ofSetColor(255);
+			ofDrawRectangle(corners[i] - glm::vec2(6), 12, 12);
+		} else {
+			ofNoFill();
+			ofSetColor(255, 128, 255);
+			ofDrawRectangle(corners[i] - glm::vec2(5), 10, 10);
+		}
 	}
 
 	ofPopStyle();
