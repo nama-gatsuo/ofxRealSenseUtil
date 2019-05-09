@@ -19,10 +19,13 @@ void ofApp::setup() {
 	oscGroup.add(isDetectLeave.set("send_on_leave", true));
 	panel.add(oscGroup);
 	panel.add(rs.getParameters());
+	panel.add(rect.getParameters());
 	panel.minimizeAll();
 	panel.loadFromFile("settings.xml");
 
 	hasBlob = false;
+
+	sender.setup("127.0.0.1", 5555);
 }
 
 void ofApp::update() {
@@ -77,7 +80,8 @@ void ofApp::update() {
 		hasBlob = false;
 	}
 	
-	sender.setup("127.0.0.1", 5555);
+	
+	
 }
 
 void ofApp::draw() {

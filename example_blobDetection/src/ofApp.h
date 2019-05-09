@@ -4,7 +4,7 @@
 #include "ofxOpenCv.h"
 #include "ofxGui.h"
 #include "ofxOsc.h"
-#include "RectBoarder.h"
+#include "RectBorder.h"
 
 class ofApp : public ofBaseApp{
 public:
@@ -29,8 +29,8 @@ private:
 	ofParameter<bool> isDetectLeave;
 	ofxOscSender sender;
 	
-	RectBoarder rect;
-	std::vector<glm::ivec2> pos;
+	RectBorder rect;
+	std::vector<glm::vec2> pos;
 
 	bool hasBlob;
 };

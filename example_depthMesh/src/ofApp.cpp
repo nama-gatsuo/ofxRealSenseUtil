@@ -31,7 +31,6 @@ void ofApp::setup() {
 	sh->setViewPortSize(256);
 
 	auto d = deferred.createPass<ofxDeferred::DofPass>();
-	d->setMaxBlur(.3);
 	d->setEndPointsCoC(glm::vec2(0.05, .3));
 	d->setFoculRange(glm::vec2(0.04, .3));
 

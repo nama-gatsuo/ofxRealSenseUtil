@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<group>
+	<zThres>1</zThres>
+	<osc>
+		<send_on_enter>1</send_on_enter>
+		<send_on_leave>1</send_on_leave>
+	</osc>
+	<ofxRealSenseUtil>
+		<Depth_filters>
+			<Decimate>
+				<active>0</active>
+				<Filter_Magnitude>2</Filter_Magnitude>
+			</Decimate>
+			<Threshold>
+				<active>0</active>
+				<Min_Distance>0.1</Min_Distance>
+				<Max_Distance>4</Max_Distance>
+			</Threshold>
+			<Disparity>
+				<active>0</active>
+			</Disparity>
+			<Spatial>
+				<active>0</active>
+				<Filter_Magnitude>2</Filter_Magnitude>
+				<Filter_Smooth_Alpha>0.5</Filter_Smooth_Alpha>
+				<Filter_Smooth_Delta>20</Filter_Smooth_Delta>
+				<Holes_Fill>0</Holes_Fill>
+			</Spatial>
+			<Temporal>
+				<active>0</active>
+				<Filter_Smooth_Alpha>0.4</Filter_Smooth_Alpha>
+				<Filter_Smooth_Delta>20</Filter_Smooth_Delta>
+				<Holes_Fill>3</Holes_Fill>
+			</Temporal>
+		</Depth_filters>
+		<depthMeshParams>
+			<pixelSize>10</pixelSize>
+		</depthMeshParams>
+	</ofxRealSenseUtil>
+	<border>
+		<position>178, 108</position>
+		<width>212</width>
+		<height>119</height>
+	</border>
+</group>
