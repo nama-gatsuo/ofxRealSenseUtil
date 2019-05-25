@@ -49,9 +49,7 @@ void Interface::update() {
 	if (isNewFrame) {
 		if (checkFlags(USE_COLOR_TEXTURE)) colorImage.setFromPixels(fd.colorPix);
 		if (checkFlags(USE_DEPTH_TEXTURE)) depthImage.setFromPixels(fd.depthPix);
-		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD) || checkFlags(USE_DEPTH_MESH_POINTCLOUD_COLOR)) {
-			meshPointCloud = fd.meshPointCloud;
-		}
+		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) meshPointCloud = fd.meshPointCloud;
 		if (checkFlags(USE_DEPTH_MESH_POLYGON)) meshPolygon = fd.meshPolygon;
 	}
 
@@ -86,10 +84,7 @@ void Interface::threadedFunction() {
 			);
 		}
 		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
-			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get(), false);
-		}
-		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD_COLOR)) {
-			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get(), true);
+			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get());
 		}
 		if (checkFlags(USE_DEPTH_MESH_POLYGON)) {
 			createMesh(newFd.meshPolygon, points, depthRes, depthPixelSize.get());
@@ -100,39 +95,28 @@ void Interface::threadedFunction() {
 
 }
 
-void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelSize, bool useColor) {
+void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelSize) {
 
 	if (!ps) return;
 
 	mesh.clear();
 
 	const rs2::vertex * vs = ps.get_vertices();
+	const rs2::texture_coordinate * texCoords = ps.get_texture_coordinates();
 	int pNum = ps.size();
 
 	const int w = res.x;
 	const int h = res.y;
-	
-	if (useColor) {
-		auto texCoords = ps.get_texture_coordinates();
-		for (int y = 0; y < h - pixelSize; y += pixelSize) {
-			for (int x = 0; x < w - pixelSize; x += pixelSize) {
-				int i = y * w + x;
-				const auto& v = vs[i];
-				const auto& uv = texCoords[i];
+		
+	for (int y = 0; y < h - pixelSize; y += pixelSize) {
+		for (int x = 0; x < w - pixelSize; x += pixelSize) {
+			int i = y * w + x;
+			const auto& v = vs[i];
+			const auto& uv = texCoords[i];
 
-				if (!v.z) continue;
-				mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
-				mesh.addTexCoord(glm::vec2(uv.u, uv.v));
-			}
-		}
-	} else {
-		for (int y = 0; y < h - pixelSize; y += pixelSize) {
-			for (int x = 0; x < w - pixelSize; x += pixelSize) {
-				int i = y * w + x;
-				const auto& v = vs[i];
-				if (!v.z) continue; continue;
-				mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
-			}
+			if (!v.z) continue;
+			mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
+			mesh.addTexCoord(glm::vec2(uv.u, uv.v));
 		}
 	}
 
@@ -146,14 +130,13 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2
 	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 
 	const rs2::vertex * vs = ps.get_vertices();
+	const rs2::texture_coordinate* texCoords = ps.get_texture_coordinates();
 
 	const int w = res.x;
 	const int h = res.y;
 
 	// list of index of depth map(x-y) - vNum
 	std::unordered_map<int, int> vMap;
-	std::vector<int> iList;
-	std::vector<glm::vec3> vList;
 
 	int indexCount = -1;
 	for (int y = 0; y < h - pixelSize; y += pixelSize) {
@@ -166,13 +149,17 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2
 				(y + pixelSize) * w + (x + pixelSize)
 			};
 			glm::vec3 pos[4];
+			glm::vec2 uv[4];
 			int eraseCount = 0;
 			bool eraseFlag[4]{ false, false, false, false };
 
 			for (int i = 0; i < 4; i++) {
 				const auto& v = vs[index[i]];
-				pos[i] = glm::vec3(v.x, -v.y, -v.z);
-				if (!v.z) {
+				const auto& t = texCoords[index[i]];
+				if (v.z) {
+					pos[i] = glm::vec3(v.x, -v.y, -v.z);
+					uv[i] = glm::vec2(t.u, t.v);
+				} else {
 					eraseFlag[i] = true;
 					eraseCount++;
 				}
@@ -186,9 +173,10 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2
 						// avoid double count
 						if (vMap.count(index[i]) == 0) {
 							vMap[index[i]] = ++indexCount;
-							vList.push_back(pos[i]);
+							mesh.addVertex(pos[i]);
+							mesh.addTexCoord(uv[i]);
 						}
-						iList.push_back(vMap[index[i]]);
+						mesh.addIndex(vMap[index[i]]);
 					}
 				}
 			}
@@ -196,26 +184,19 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2
 				for (int i = 0; i < 4; i++) {
 					if (vMap.count(index[i]) == 0) {
 						vMap[index[i]] = ++indexCount;
-						vList.push_back(pos[i]);
+						mesh.addVertex(pos[i]);
+						mesh.addTexCoord(uv[i]);
 					}
 				}
-				iList.push_back(vMap[index[0]]);
-				iList.push_back(vMap[index[1]]);
-				iList.push_back(vMap[index[2]]);
+				mesh.addIndex(vMap[index[0]]);
+				mesh.addIndex(vMap[index[1]]);
+				mesh.addIndex(vMap[index[2]]);
 
-				iList.push_back(vMap[index[2]]);
-				iList.push_back(vMap[index[1]]);
-				iList.push_back(vMap[index[3]]);
+				mesh.addIndex(vMap[index[2]]);
+				mesh.addIndex(vMap[index[1]]);
+				mesh.addIndex(vMap[index[3]]);
 			}
 		}
-	}
-
-	for (auto& v : vList) {
-		mesh.addVertex(v);
-	}
-
-	for (int vi : iList) {
-		mesh.addIndex(vi);
 	}
 }
 
@@ -232,7 +213,7 @@ const ofFloatImage& Interface::getDepthImage() const {
 	return depthImage;
 }
 const ofVboMesh& Interface::getPointCloud() const {
-	if (!checkFlags(USE_DEPTH_MESH_POINTCLOUD) && !checkFlags(USE_DEPTH_MESH_POINTCLOUD_COLOR)) {
+	if (!checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
 		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
 	}
 	return meshPointCloud;

@@ -17,8 +17,7 @@ namespace ofxRealSenseUtil {
 		USE_COLOR_TEXTURE = (1 << 0),
 		USE_DEPTH_TEXTURE = (1 << 1),
 		USE_DEPTH_MESH_POINTCLOUD = (1 << 2),
-		USE_DEPTH_MESH_POINTCLOUD_COLOR = (1 << 3),
-		USE_DEPTH_MESH_POLYGON = (1 << 4)
+		USE_DEPTH_MESH_POLYGON = (1 << 3)
 	}; 
 
 	class Interface : public ofThread {
@@ -44,7 +43,7 @@ namespace ofxRealSenseUtil {
 	private:
 		void threadedFunction() override;
 		
-		void createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelStep, bool useColor);
+		void createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelStep);
 		void createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelStep);
 
 		struct FrameData {
