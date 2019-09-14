@@ -1,6 +1,14 @@
 # ofxRealSenseUtil
 Wrapper and Utilities for RealSense SDK
 
+## Screenshots
+
+Blob detection (in screen space with a depth threshold)
+![](./example_blobDetection/screenshot.png)
+
+Polygon-meshing
+![](./example_depthMesh/screenshot.png)
+
 ## Dependency
 * IntelRealSense / [librealsense](https://github.com/IntelRealSense/librealsense)
   * Using the installer (Intel.RealSense.SDK.exe) is recommended
