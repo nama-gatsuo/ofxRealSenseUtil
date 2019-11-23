@@ -1,48 +1,36 @@
-#include "ofxRealSenseUtil.h"
+#include "RealSenseServer.h"
 
 using namespace ofxRealSenseUtil;
 
-Interface::Interface() : isNewFrame(true), flags(0) {
-	payload.flags = flags;
+Server::Server() {}
 
-	rs2::context ctx;
-	auto& list = ctx.query_devices(); // Get a snapshot of currently connected devices
-	if (list.size() == 0) {
-		//throw std::runtime_error("No device detected. Is it plugged in?");
-		ofLogWarning("ofxRealSenseUtil") << "No device detected. Is realsense plugged in?";
+Server::~Server() {
+	request.close();
+	response.close();
+	stop();
+}
+
+void Server::start() {
+	if (!source) {
+		ofLogWarning("ofxRealSenseUtil") << "Cant't start because source is empty.";
 	} else {
-		rs2::config cfg;
-		// Use a configuration object to request only depth from the pipeline
-		cfg.enable_stream(RS2_STREAM_DEPTH, rsDepthRes.x, rsDepthRes.y, RS2_FORMAT_Z16, 30);
-		cfg.enable_stream(RS2_STREAM_COLOR, rsColorRes.x, rsColorRes.y, RS2_FORMAT_RGB8, 30);
-		// Start streaming with the above configuration
-		pipe.start(cfg);
+		source->pipe.start(source->config);
 		startThread();
 	}
-
-	rsParams.setName("ofxRealSenseUtil");
-	rsParams.add(filters.getParameters());
-
-	depthMeshParams.setName("depthMeshParams");
-	depthMeshParams.add(depthPixelSize.set("pixelSize", 10, 1, 100));
-	rsParams.add(depthMeshParams);
-
 }
 
-Interface::~Interface() {
-	request.close();
-	complete.close();
+void Server::stop() {
 	waitForThread(true);
-	pipe.stop();
+	stopThread();
+	if (source) source->pipe.stop();
 }
 
-void Interface::update() {
-
-	request.send(payload);
-
+void Server::update() {
+	bool r = true;
+	request.send(r);
 	isNewFrame = false;
 
-	while (complete.tryReceive(fd)) {
+	while (response.tryReceive(fd)) {
 		isNewFrame = true;
 	}
 
@@ -55,12 +43,12 @@ void Interface::update() {
 
 }
 
-void Interface::threadedFunction() {
-	RequestPayload pay;
-	while (request.receive(pay)) {
+void Server::threadedFunction() {
+	bool r = true;
+	while (request.receive(r)) {
 
 		FrameData newFd;
-		auto& frames = pipe.wait_for_frames();
+		auto& frames = source->pipe.wait_for_frames();
 		auto& depth = frames.get_depth_frame();
 		auto& color = frames.get_color_frame();
 
@@ -90,12 +78,12 @@ void Interface::threadedFunction() {
 			createMesh(newFd.meshPolygon, points, depthRes, depthPixelSize.get());
 		}
 		
-		complete.send(std::move(newFd));
+		response.send(std::move(newFd));
 	}
 
 }
 
-void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelSize) {
+void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& res, int pixelSize) {
 
 	if (!ps) return;
 
@@ -122,7 +110,7 @@ void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm:
 
 }
 
-void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2 res, int pixelSize) {
+void Server::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& res, int pixelSize) {
 
 	if (!ps) return;
 
@@ -200,25 +188,25 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2
 	}
 }
 
-const ofImage& Interface::getColorImage() const {
+const ofImage& Server::getColorImage() const {
 	if (!checkFlags(USE_COLOR_TEXTURE)) {
 		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
 	}
 	return colorImage;
 }
-const ofFloatImage& Interface::getDepthImage() const {
+const ofFloatImage& Server::getDepthImage() const {
 	if (!checkFlags(USE_DEPTH_TEXTURE)) {
 		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
 	}
 	return depthImage;
 }
-const ofVboMesh& Interface::getPointCloud() const {
+const ofVboMesh& Server::getPointCloud() const {
 	if (!checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
 		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
 	}
 	return meshPointCloud;
 }
-const ofVboMesh& Interface::getPolygonMesh() const {
+const ofVboMesh& Server::getPolygonMesh() const {
 	if (!checkFlags(USE_DEPTH_MESH_POLYGON)) {
 		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
 	}

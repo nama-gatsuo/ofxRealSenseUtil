@@ -21,14 +21,11 @@ void ofApp::setup() {
 	s->setDarkness(.5);
 
 	sh = deferred.createPass<ofxDeferred::ShadowLightPass>();
-	sh->setNear(400.);
-	sh->setFar(2000.);
 	sh->setPosition(glm::vec3(300, 500, - 400));
 	sh->lookAt(glm::vec3(0));
 	sh->setAmbientColor(ofFloatColor(0.86, 0.86, 0.83));
 	sh->setDiffuseColor(ofFloatColor(0.95));
 	sh->setDarkness(.6);
-	sh->setViewPortSize(256);
 
 	auto d = deferred.createPass<ofxDeferred::DofPass>();
 	d->setEndPointsCoC(glm::vec2(0.05, .3));
@@ -37,16 +34,16 @@ void ofApp::setup() {
 	cam.setNearClip(0.);
 	cam.setFarClip(3000.);
 
-	rs = std::make_shared<ofxRealSenseUtil::Interface>();
-	rs->enableFlags(ofxRealSenseUtil::USE_DEPTH_MESH_POLYGON);
+	rs.enableFlags(ofxRealSenseUtil::USE_DEPTH_MESH_POLYGON);
+	rs.start();
 
 	panel.setup();
-	panel.add(rs->getParameters());
+	panel.add(rs.getParameters());
 
 }
 
 void ofApp::update() {
-	rs->update();
+	rs.update();
 }
 
 void ofApp::draw() {
@@ -59,14 +56,14 @@ void ofApp::draw() {
 		ofPushMatrix();
 		ofScale(500.);
 		ofTranslate(0, 0, 1.);
-		rs->getPolygonMesh().draw();
+		rs.getPolygonMesh().draw();
 		ofPopMatrix();
 
 		shader.end();
 	};
 
 
-	sh->beginShadowMap(true);
+	sh->beginShadowMap(cam, true);
 	drawFunc(sh->getLinearScalar(), true);
 	sh->endShadowMap();
 
@@ -80,6 +77,6 @@ void ofApp::draw() {
 }
 
 void ofApp::exit() {
-	rs->stopThread();
+	rs.stop();
 }
 
