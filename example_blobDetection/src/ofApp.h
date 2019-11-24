@@ -14,7 +14,7 @@ public:
 	void keyPressed(int key);
 
 private:
-	ofxRealSenseUtil::Interface rs;
+	ofxRealSenseUtil::Grabber rs;
 	ofFbo binarized;
 	ofFbo binarizedShrunk;
 	ofShader binarizeShader;

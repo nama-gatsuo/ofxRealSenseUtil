@@ -15,7 +15,7 @@ public:
 private:
 	ofEasyCam cam;
 	ofShader clipShader;
-	ofPtr<ofxRealSenseUtil::Interface> rs;
+	ofxRealSenseUtil::Grabber rs;
 	ofxDeferredProcessing deferred;
 	ofxDeferred::ShadowLightPass::Ptr sh;
 	

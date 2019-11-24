@@ -6,6 +6,8 @@ void ofApp::setup() {
 	ofBackground(0);
 
 	rs.enableFlags(ofxRealSenseUtil::USE_COLOR_TEXTURE | ofxRealSenseUtil::USE_DEPTH_TEXTURE);
+	rs.start();
+
 	binarizeShader.load("shader/binarize");
 	binarized.allocate(1280, 720, GL_R8);
 	binarizedShrunk.allocate(640, 360, GL_R8);

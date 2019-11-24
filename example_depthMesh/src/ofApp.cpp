@@ -34,29 +34,30 @@ void ofApp::setup() {
 	cam.setNearClip(0.);
 	cam.setFarClip(3000.);
 
-	rs = std::make_shared<ofxRealSenseUtil::Interface>();
-	rs->enableFlags(ofxRealSenseUtil::USE_DEPTH_MESH_POLYGON | ofxRealSenseUtil::USE_COLOR_TEXTURE);
-	rs->setClipRect(ofRectangle(glm::vec2((1280 - 480) / 2, (720 - 480) / 2), 480, 480));
+	rs.enableFlags(ofxRealSenseUtil::USE_DEPTH_MESH_POLYGON | ofxRealSenseUtil::USE_COLOR_TEXTURE);
+	rs.setClipRect(ofRectangle(glm::vec2((1280 - 480) / 2, (720 - 480) / 2), 480, 480));
+	rs.start();
 
 	panel.setup();
-	panel.add(rs->getParameters());
-	panel.add(deferred.getParameters());
+	panel.add(rs.getParameters());
 	panel.add(offsetY.set("offsetY", 0., -3.f, 3.f));
 	panel.add(clipZ.set("clipZ", 0., 0.f, 6.f));
+
 }
 
 void ofApp::update() {
-	rs->update();
+	rs.update();
 }
 
 void ofApp::draw() {
 	
 	auto drawFunc = [&](float lds, bool isShadow) {
+
 		
 		glEnable(GL_CLIP_DISTANCE0);
 		glEnable(GL_CLIP_DISTANCE1);
 		glEnable(GL_CLIP_DISTANCE2);
-		
+
 		int numAngle = 6;
 		float t = PI / float(numAngle);
 
@@ -69,10 +70,12 @@ void ofApp::draw() {
 		clipShader.setUniform4f("clipPlane2", glm::vec4(0, 0, 1, 0));
 		clipShader.setUniform1f("offsetY", offsetY);
 		clipShader.setUniform1f("clipZ", clipZ);
-		clipShader.setUniformTexture("tex", rs->getColorImage(), 0);
+		clipShader.setUniformTexture("tex", rs.getColorImage(), 0);
 
-;		ofPushMatrix();
+		ofPushMatrix();
 		ofScale(500.);
+		ofTranslate(0, 0, 1.);
+		//rs.getPolygonMesh().draw();
 		for (int i = 0; i < 6; i++) {
 			ofPushMatrix();
 			ofRotateZ(60.f * i);
@@ -80,12 +83,12 @@ void ofApp::draw() {
 				ofScale(1, 1, -1);
 				for (int j = 0; j < 2; j++) {
 					ofScale(1, -1, 1);
-					rs->getPolygonMesh().draw();
+					rs.getPolygonMesh().draw();
 				}
 			}
 			ofPopMatrix();
 		}
-		
+
 		ofPopMatrix();
 
 		clipShader.end();
@@ -104,12 +107,13 @@ void ofApp::draw() {
 	drawFunc(1. / (cam.getFarClip() - cam.getNearClip()), false);
 	deferred.end();
 
-	//sh->debugDraw();
+	//sh->debugDraw
+	deferred.debugDraw();
 	panel.draw();
-	//ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate()), 10, 20);
+	ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate()), 10, 20);
 }
 
 void ofApp::exit() {
-	rs->stopThread();
+	rs.stop();
 }
 
