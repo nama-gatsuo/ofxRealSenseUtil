@@ -6,14 +6,27 @@ in vec4 color;
 in vec4 normal;
 in vec2 texcoord;
 
+uniform vec4 clipPlane0;
+uniform vec4 clipPlane1;
+uniform vec4 clipPlane2;
+uniform float offsetY;
+uniform float clipZ;
+
 uniform float lds;
 out vec4 vPos;
 out float vDepth;
+out vec2 vTexCoord;
 
 void main() {
 
-    vec3 p = position.xyz;
-    vPos = modelViewMatrix * vec4(p, 1.);
+    vec4 p = position;
+    p.y += offsetY;
+    p.z += clipZ;
+    vPos = modelViewMatrix * p;
     vDepth = - vPos.z * lds;
-    gl_Position = modelViewProjectionMatrix * vec4(p, 1.);
+    vTexCoord = texcoord;
+    gl_Position = modelViewProjectionMatrix * p;
+    gl_ClipDistance[0] = dot(p, clipPlane0);
+    gl_ClipDistance[1] = dot(p, clipPlane1);
+    gl_ClipDistance[2] = dot(p, clipPlane2);
 }

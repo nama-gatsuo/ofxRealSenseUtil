@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<group>
+	<ofxRealSenseUtil>
+		<Depth_filters>
+			<Decimate>
+				<active>1</active>
+				<Filter_Magnitude>2</Filter_Magnitude>
+			</Decimate>
+			<Threshold>
+				<active>1</active>
+				<Min_Distance>0</Min_Distance>
+				<Max_Distance>1.46524</Max_Distance>
+			</Threshold>
+			<Disparity>
+				<active>0</active>
+			</Disparity>
+			<Spatial>
+				<active>0</active>
+				<Filter_Magnitude>2</Filter_Magnitude>
+				<Filter_Smooth_Alpha>0.330636</Filter_Smooth_Alpha>
+				<Filter_Smooth_Delta>38</Filter_Smooth_Delta>
+				<Holes_Fill>4</Holes_Fill>
+			</Spatial>
+			<Temporal>
+				<active>1</active>
+				<Filter_Smooth_Alpha>0.973438</Filter_Smooth_Alpha>
+				<Filter_Smooth_Delta>37</Filter_Smooth_Delta>
+				<Holes_Fill>7</Holes_Fill>
+			</Temporal>
+		</Depth_filters>
+		<depthMeshParams>
+			<pixelSize>3</pixelSize>
+		</depthMeshParams>
+		<enableClip>1</enableClip>
+	</ofxRealSenseUtil>
+	<deferred>
+		<BgPass>
+			<active>1</active>
+			<fill_color>0.1, 0.1, 0.1, 1</fill_color>
+		</BgPass>
+		<EdgePass>
+			<active>0</active>
+			<edge_color>0.6, 0.6, 0.6, 1</edge_color>
+			<bg_color>0, 0, 0, 1</bg_color>
+			<use_read_as_bg>1</use_read_as_bg>
+			<normalEdgeStrength>1</normalEdgeStrength>
+			<depthEdgeStrength>1</depthEdgeStrength>
+		</EdgePass>
+		<SsaoPass>
+			<active>1</active>
+			<occlusion_radius>34.6418</occlusion_radius>
+			<darkness>1</darkness>
+		</SsaoPass>
+		<ShadowLightPass>
+			<active>1</active>
+			<darkness>0.583507</darkness>
+			<biasScalar>0.005</biasScalar>
+			<ambient_color>1, 1, 0.965116, 1</ambient_color>
+			<diffuse_color>1, 1, 1, 1</diffuse_color>
+			<source_position>100, 394.267, 1025.3</source_position>
+			<source_look>0, 0, 0</source_look>
+			<isShading>1</isShading>
+			<isVolume>0</isVolume>
+			<isDrawSun>1</isDrawSun>
+			<isFrontCulling>0</isFrontCulling>
+			<scattering>0.2</scattering>
+		</ShadowLightPass>
+		<DofPass>
+			<active>1</active>
+			<endpoint_coc>0.05, 0.3</endpoint_coc>
+			<focul_range>0.04, 0.3</focul_range>
+			<BlurPass>
+				<active>1</active>
+				<preShrink>1</preShrink>
+				<sampleStep>1</sampleStep>
+				<blurRes>12</blurRes>
+			</BlurPass>
+			<bokeh>
+				<isActiveBokeh>0</isActiveBokeh>
+				<maxBokehCount>500</maxBokehCount>
+				<bokehCocThres>0.03</bokehCocThres>
+				<bokehLumThres>0.03</bokehLumThres>
+				<maxBokehRadius>100</maxBokehRadius>
+				<bokehDepthCutoff>0.03</bokehDepthCutoff>
+				<bokehShapeId>0</bokehShapeId>
+			</bokeh>
+		</DofPass>
+	</deferred>
+</group>

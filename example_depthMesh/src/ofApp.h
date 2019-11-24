@@ -14,13 +14,13 @@ public:
 
 private:
 	ofEasyCam cam;
-	ofShader shader;
+	ofShader clipShader;
 	ofPtr<ofxRealSenseUtil::Interface> rs;
 	ofxDeferredProcessing deferred;
 	ofxDeferred::ShadowLightPass::Ptr sh;
 	
 	bool tog;
 	ofxPanel panel;
-	ofParameter<float> lim;
-	ofParameter<int> res;
+	ofParameter<float> offsetY;
+	ofParameter<float> clipZ;
 };

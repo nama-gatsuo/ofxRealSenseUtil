@@ -26,6 +26,7 @@ Interface::Interface() : isNewFrame(true), flags(0) {
 	depthMeshParams.setName("depthMeshParams");
 	depthMeshParams.add(depthPixelSize.set("pixelSize", 10, 1, 100));
 	rsParams.add(depthMeshParams);
+	rsParams.add(isClip.set("enableClip", false));
 
 }
 
@@ -68,7 +69,7 @@ void Interface::threadedFunction() {
 		filters.filter(depth);
 		
 		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
-
+		
 		auto& points = pc.calculate(depth);
 
 		if (checkFlags(USE_COLOR_TEXTURE)) {
@@ -100,11 +101,11 @@ void Interface::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm:
 	if (!ps) return;
 
 	mesh.clear();
-
+	
 	const rs2::vertex * vs = ps.get_vertices();
 	const rs2::texture_coordinate * texCoords = ps.get_texture_coordinates();
 	int pNum = ps.size();
-
+	
 	const int w = res.x;
 	const int h = res.y;
 		
@@ -130,23 +131,28 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2
 	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 
 	const rs2::vertex * vs = ps.get_vertices();
-	const rs2::texture_coordinate* texCoords = ps.get_texture_coordinates();
+	const rs2::texture_coordinate * texCoords = ps.get_texture_coordinates();
 
-	const int w = res.x;
-	const int h = res.y;
+	glm::ivec2 start(0, 0), end(res);
+	if (isClip) {
+		glm::vec2 scale = glm::vec2(res) / glm::vec2(rsDepthRes);
+		start = clipRect.position * scale;
+		end = clipRect.getBottomRight() * scale;
+	}
+	const glm::ivec2 numTexel = glm::abs(start - end) / pixelSize;
 
 	// list of index of depth map(x-y) - vNum
 	std::unordered_map<int, int> vMap;
 
 	int indexCount = -1;
-	for (int y = 0; y < h - pixelSize; y += pixelSize) {
-		for (int x = 0; x < w - pixelSize; x += pixelSize) {
+	for (int y = start.y + pixelSize; y < end.y - pixelSize; y += pixelSize) {
+		for (int x = start.x + pixelSize; x < end.x - pixelSize; x += pixelSize) {
 
 			int index[4] = {
-				y * w + x,
-				y * w + (x + pixelSize),
-				(y + pixelSize) * w + x,
-				(y + pixelSize) * w + (x + pixelSize)
+				y * res.x + x,
+				y * res.x + (x + pixelSize),
+				(y + pixelSize) * res.x + x,
+				(y + pixelSize) * res.x + (x + pixelSize)
 			};
 			glm::vec3 pos[4];
 			glm::vec2 uv[4];
@@ -198,6 +204,7 @@ void Interface::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2
 			}
 		}
 	}
+	float endTime = ofGetElapsedTimef();
 }
 
 const ofImage& Interface::getColorImage() const {

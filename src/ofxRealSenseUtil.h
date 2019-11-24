@@ -38,6 +38,8 @@ namespace ofxRealSenseUtil {
 		const ofVboMesh& getPolygonMesh() const;
 
 		void setDepthRes(int p) { depthPixelSize.set(p); }
+		void setClipRect(const ofRectangle& rect) { clipRect = rect; }
+
 		ofParameterGroup& getParameters() { return rsParams; }
 
 	private:
@@ -60,6 +62,8 @@ namespace ofxRealSenseUtil {
 		ofParameterGroup rsParams;
 		ofParameterGroup depthMeshParams;
 		ofParameter<int> depthPixelSize;
+		ofParameter<bool> isClip;
+		ofRectangle clipRect;
 
 		rs2::frame_queue frameQueue;
 		rs2::pipeline pipe;
