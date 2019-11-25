@@ -41,8 +41,8 @@ namespace ofxRealSenseUtil {
 
 	class Recorder : public Server {
 	public:
-		Recorder(const std::string& path) : Recorder({ rsDepthRes, rsColorRes, true, true, 0 }, path) {}
-		Recorder(const Settings& s, const std::string& path) {
+		Recorder() : Recorder({ rsDepthRes, rsColorRes, true, true, 0 }) {}
+		Recorder(const Settings& s) {
 			auto source = std::make_shared<Source>();
 			rs2::context ctx;
 			auto& list = ctx.query_devices(); // Get a snapshot of currently connected devices
@@ -59,13 +59,41 @@ namespace ofxRealSenseUtil {
 				source->config.enable_device(deviceSerial);
 				if (s.useDepth) source->config.enable_stream(RS2_STREAM_DEPTH, s.depthRes.x, s.depthRes.y, RS2_FORMAT_Z16, 30);
 				if (s.useColor) source->config.enable_stream(RS2_STREAM_COLOR, s.colorRes.x, s.colorRes.y, RS2_FORMAT_RGB8, 30);
-				ofLogWarning("ofxRealSenseUtil") << deviceSerial << " is active!";
-
-				// Enabling to record to file
-				source->config.enable_record_to_file("data/" + path);
+				ofLogWarning("ofxRealSenseUtil") << deviceSerial << " is active!";	
 			}
-			
+			defaultSettings = s;
 			Server::source = source;
+		}
+
+		void startRecord(const std::string& path) {
+			if (!source->device.as<rs2::recorder>()) {
+				stop();			
+				source->config.enable_record_to_file("data/" + path);// Enabling to record to file
+				start();
+				source->device = source->pipe.get_active_profile().get_device();
+			} else {
+				ofLogWarning("ofxRealSenseUtil::Recorder") << "Already started";
+				//rec.resume();
+			}	
+		}
+
+		void endRecord() {
+			if (source->device.as<rs2::recorder>()) {
+				rs2::context ctx;
+				auto& list = ctx.query_devices(); // Get a snapshot of currently connected devices
+				source->pipe.stop(); // Stop streaming with default configuration
+				source->device = list[defaultSettings.deviceId];
+				const std::string& deviceSerial = source->device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+				source->config.enable_device(deviceSerial);
+				if (defaultSettings.useDepth) source->config.enable_stream(RS2_STREAM_DEPTH, defaultSettings.depthRes.x, defaultSettings.depthRes.y, RS2_FORMAT_Z16, 30);
+				if (defaultSettings.useColor) source->config.enable_stream(RS2_STREAM_COLOR, defaultSettings.colorRes.x, defaultSettings.colorRes.y, RS2_FORMAT_RGB8, 30);
+				
+				source->pipe.start(source->config); // Enabling to record to file
+				
+				source->device = source->pipe.get_active_profile().get_device();
+			} else {
+				ofLogWarning("ofxRealSenseUtil::Recorder") << "not started yet.";
+			}
 		}
 
 		void pause() {
@@ -74,7 +102,9 @@ namespace ofxRealSenseUtil {
 		void resume() {
 			source->device.as<rs2::recorder>().resume();
 		}
-
+		
+	private:
+		Settings defaultSettings;
 	};
 
 	class Player : public Server {
