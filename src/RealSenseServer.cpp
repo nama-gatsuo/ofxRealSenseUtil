@@ -10,15 +10,14 @@ Server::Server() {
 	rsParams.add(isClip.set("enableClip", false));
 }
 
-Server::~Server() {
-	//stop();
-}
+Server::~Server() {}
 
 void Server::start() {
 	request = std::make_shared<ofThreadChannel<bool>>();
 	response = std::make_shared<ofThreadChannel<FrameData>>();
 	pipe->start(config);
 	device = pipe->get_active_profile().get_device();
+	ofLogNotice("ofxRealSenseUtil") << "Start: " << device.get_info(RS2_CAMERA_INFO_NAME);
 	startThread();
 }
 
@@ -52,7 +51,7 @@ void Server::refreshConfig(const Settings& s) {
 	config = rs2::config();
 	pipe = std::make_shared<rs2::pipeline>();
 
-	if (device != -1) {
+	if (s.deviceId != -1) {
 		rs2::context ctx;
 		rs2::device_list deviceList = ctx.query_devices();
 
@@ -65,14 +64,15 @@ void Server::refreshConfig(const Settings& s) {
 			device = deviceList[s.deviceId];
 			const std::string& deviceSerial = device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
 			config.enable_device(deviceSerial);
-			if (s.useDepth) config.enable_stream(RS2_STREAM_DEPTH, s.depthRes.x, s.depthRes.y, RS2_FORMAT_Z16, 30);
-			if (s.useColor) config.enable_stream(RS2_STREAM_COLOR, s.colorRes.x, s.colorRes.y, RS2_FORMAT_RGB8, 30);
 			ofLogNotice("ofxRealSenseUtil") << deviceSerial << " is active!";
 		}
 	} else {
 		ofLogNotice("ofxRealSenseUtil") << "Device is not set.";
 	}
-	
+
+	if (s.useDepth) config.enable_stream(RS2_STREAM_DEPTH, s.depthRes.x, s.depthRes.y, RS2_FORMAT_Z16, 30);
+	if (s.useColor) config.enable_stream(RS2_STREAM_COLOR, s.colorRes.x, s.colorRes.y, RS2_FORMAT_RGB8, 30);
+
 }
 
 void Server::threadedFunction() {
@@ -81,16 +81,14 @@ void Server::threadedFunction() {
 
 		FrameData newFd;
 		
-		auto& frames = pipe->wait_for_frames();
+		rs2::frameset frames;
+		if (!pipe->poll_for_frames(&frames)) continue;
+		
 		auto& depth = frames.get_depth_frame();
 		auto& color = frames.get_color_frame();
-
+		
 		pc.map_to(color);
 		filters.filter(depth);
-
-		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
-
-		auto& points = pc.calculate(depth);
 
 		if (checkFlags(USE_COLOR_TEXTURE)) {
 			newFd.colorPix.setFromPixels(
@@ -98,12 +96,16 @@ void Server::threadedFunction() {
 				color.get_width(), color.get_height(), OF_IMAGE_COLOR
 			);
 		}
+
+		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
+		auto& points = pc.calculate(depth);
 		if (checkFlags(USE_DEPTH_TEXTURE)) {
 			newFd.depthPix.setFromPixels(
 				(float*)points.get_vertices(),
 				depthRes.x, depthRes.y, OF_IMAGE_COLOR
 			);
 		}
+		
 		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
 			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get());
 		}
@@ -147,7 +149,7 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 void Server::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& res, int pixelSize) {
 
 	if (!ps) return;
-	ofLogNotice() << "call";
+	
 	mesh.clear();
 	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 

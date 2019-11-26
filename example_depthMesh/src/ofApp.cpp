@@ -3,34 +3,15 @@
 void ofApp::setup() {
 
 	clipShader.load("shader/shader");
-	ofSetVerticalSync(false);
+	//ofSetVerticalSync(false);
 
 	deferred.init();
-
-	auto bg = deferred.createPass<ofxDeferred::BgPass>();
-	bg->begin();
-	ofClear(239, 244, 255, 255);
-	bg->end();
-
-	auto e = deferred.createPass<ofxDeferred::EdgePass>();
-	e->setEdgeColor(ofFloatColor(0.6));
-	e->setUseReadColor(true);
-
-	auto s = deferred.createPass<ofxDeferred::SsaoPass>();
-	s->setOcculusionRadius(5.);
-	s->setDarkness(.5);
-
+	deferred.createPass<ofxDeferred::BgPass>();
+	deferred.createPass<ofxDeferred::EdgePass>();
+	deferred.createPass<ofxDeferred::SsaoPass>();
 	sh = deferred.createPass<ofxDeferred::ShadowLightPass>();
-	sh->setPosition(glm::vec3(300, 500, - 400));
-	sh->lookAt(glm::vec3(0));
-	sh->setAmbientColor(ofFloatColor(0.86, 0.86, 0.83));
-	sh->setDiffuseColor(ofFloatColor(0.95));
-	sh->setDarkness(.6);
-
-	auto d = deferred.createPass<ofxDeferred::DofPass>();
-	d->setEndPointsCoC(glm::vec2(0.05, .3));
-	d->setFoculRange(glm::vec2(0.04, .3));
-
+	deferred.createPass<ofxDeferred::DofPass>();
+	
 	cam.setNearClip(0.);
 	cam.setFarClip(3000.);
 
@@ -42,7 +23,10 @@ void ofApp::setup() {
 	panel.add(rs.getParameters());
 	panel.add(offsetY.set("offsetY", 0., -3.f, 3.f));
 	panel.add(clipZ.set("clipZ", 0., 0.f, 6.f));
-
+	panel.add(deferred.getParameters());
+	panel.loadFromFile("settings.xml");
+	panel.minimizeAll();
+	
 }
 
 void ofApp::update() {
@@ -52,8 +36,6 @@ void ofApp::update() {
 void ofApp::draw() {
 	
 	auto drawFunc = [&](float lds, bool isShadow) {
-
-		
 		glEnable(GL_CLIP_DISTANCE0);
 		glEnable(GL_CLIP_DISTANCE1);
 		glEnable(GL_CLIP_DISTANCE2);
@@ -64,7 +46,6 @@ void ofApp::draw() {
 		clipShader.begin();
 		clipShader.setUniform1f("lds", lds);
 		clipShader.setUniform1f("isShadow", isShadow ? 1 : 0);
-		//clipShader.setUniform4f("clipPlane0", glm::vec4(cos(t), sin(t), 0, 0));
 		clipShader.setUniform4f("clipPlane0", glm::vec4(1, 0, 0, 0));
 		clipShader.setUniform4f("clipPlane1", glm::vec4(-cos(t), sin(t), 0, 0));
 		clipShader.setUniform4f("clipPlane2", glm::vec4(0, 0, 1, 0));

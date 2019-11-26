@@ -39,17 +39,17 @@
 			<fill_color>0.1, 0.1, 0.1, 1</fill_color>
 		</BgPass>
 		<EdgePass>
-			<active>0</active>
+			<active>1</active>
 			<edge_color>0.6, 0.6, 0.6, 1</edge_color>
 			<bg_color>0, 0, 0, 1</bg_color>
 			<use_read_as_bg>1</use_read_as_bg>
-			<normalEdgeStrength>1</normalEdgeStrength>
-			<depthEdgeStrength>1</depthEdgeStrength>
+			<normalEdgeStrength>0.219075</normalEdgeStrength>
+			<depthEdgeStrength>0.224282</depthEdgeStrength>
 		</EdgePass>
 		<SsaoPass>
 			<active>1</active>
-			<occlusion_radius>34.6418</occlusion_radius>
-			<darkness>1</darkness>
+			<occlusion_radius>8.09038</occlusion_radius>
+			<darkness>0.859434</darkness>
 		</SsaoPass>
 		<ShadowLightPass>
 			<active>1</active>
@@ -57,13 +57,14 @@
 			<biasScalar>0.005</biasScalar>
 			<ambient_color>1, 1, 0.965116, 1</ambient_color>
 			<diffuse_color>1, 1, 1, 1</diffuse_color>
-			<source_position>100, 394.267, 1025.3</source_position>
+			<source_position>100, 503.065, 1112.34</source_position>
 			<source_look>0, 0, 0</source_look>
 			<isShading>1</isShading>
 			<isVolume>0</isVolume>
 			<isDrawSun>1</isDrawSun>
 			<isFrontCulling>0</isFrontCulling>
 			<scattering>0.2</scattering>
+			<volumeStrength>1</volumeStrength>
 		</ShadowLightPass>
 		<DofPass>
 			<active>1</active>
@@ -86,4 +87,39 @@
 			</bokeh>
 		</DofPass>
 	</deferred>
+	<group>
+		<Depth_filters>
+			<Decimate>
+				<active>1</active>
+				<Filter_Magnitude>2</Filter_Magnitude>
+			</Decimate>
+			<Threshold>
+				<active>0</active>
+				<Min_Distance>0.1</Min_Distance>
+				<Max_Distance>4</Max_Distance>
+			</Threshold>
+			<Disparity>
+				<active>0</active>
+			</Disparity>
+			<Spatial>
+				<active>0</active>
+				<Filter_Magnitude>2</Filter_Magnitude>
+				<Filter_Smooth_Alpha>0.820706</Filter_Smooth_Alpha>
+				<Filter_Smooth_Delta>6</Filter_Smooth_Delta>
+				<Holes_Fill>0</Holes_Fill>
+			</Spatial>
+			<Temporal>
+				<active>1</active>
+				<Filter_Smooth_Alpha>0.4</Filter_Smooth_Alpha>
+				<Filter_Smooth_Delta>20</Filter_Smooth_Delta>
+				<Holes_Fill>8</Holes_Fill>
+			</Temporal>
+		</Depth_filters>
+		<depthMeshParams>
+			<pixelSize>4</pixelSize>
+		</depthMeshParams>
+		<enableClip>1</enableClip>
+	</group>
+	<offsetY>0.51</offsetY>
+	<clipZ>0.96</clipZ>
 </group>

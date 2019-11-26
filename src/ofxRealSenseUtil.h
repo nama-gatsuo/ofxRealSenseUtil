@@ -30,7 +30,6 @@ namespace ofxRealSenseUtil {
 				ofLogNotice("ofxRealSenseUtil") << "Start recording";
 			} else {
 				ofLogWarning("ofxRealSenseUtil::Recorder") << "Already started.";
-				//rec.resume();
 			}	
 		}
 
@@ -58,21 +57,19 @@ namespace ofxRealSenseUtil {
 
 	class Player : public Server {
 	public:
-		Player(const std::string& path) : Player({ rsDepthRes, rsColorRes, true, true, 0 }, path) {}
+		Player(const std::string& path) : Player({ rsDepthRes, rsColorRes, true, true, -1 }, path) {}
 		Player(const Settings& s, const std::string& path) {
 			refreshConfig(s);
 			// Enable reading from file
 			config.enable_device_from_file("data/" + path);
 		}
 		void pause() {
-			waitForThread(true);
 			device.as<rs2::playback>().pause();
 		}
 		void resume() {
-			waitForThread(true);
 			device.as<rs2::playback>().resume();
 		}
-		void seek(float percent) {
+		void seek(double percent) {
 			waitForThread(true);
 			auto& playback = device.as<rs2::playback>();
 			if (playback.current_status() != RS2_PLAYBACK_STATUS_STOPPED) {
