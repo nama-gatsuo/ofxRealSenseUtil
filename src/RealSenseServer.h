@@ -20,10 +20,12 @@ namespace ofxRealSenseUtil {
 		USE_DEPTH_MESH_POLYGON = (1 << 3)
 	}; 
 
-	struct Source {
-		rs2::pipeline pipe;
-		rs2::config config;
-		rs2::device device;
+	struct Settings {
+		glm::ivec2 depthRes;
+		glm::ivec2 colorRes;
+		bool useColor;
+		bool useDepth;
+		int deviceId;
 	};
 
 	class Server : protected ofThread {
@@ -53,7 +55,10 @@ namespace ofxRealSenseUtil {
 		ofParameterGroup& getParameters() { return rsParams; }
 
 	protected:
-		ofPtr<Source> source;
+		rs2::device device;
+		rs2::config config;
+		ofPtr<rs2::pipeline> pipe;
+		void refreshConfig(const Settings& source);
 
 	private:
 		void threadedFunction() override;
@@ -84,10 +89,10 @@ namespace ofxRealSenseUtil {
 		bool isNewFrame;
 
 		// unsignd char has 8 bits so it can have 8 falgs.
-		unsigned char flags; 
+		unsigned char flags;
 
-		ofThreadChannel<bool> request;
-		ofThreadChannel<FrameData> response;
+		ofPtr<ofThreadChannel<bool>> request;
+		ofPtr<ofThreadChannel<FrameData>> response;
 
 		PostProcessingFilters filters;
 	};
