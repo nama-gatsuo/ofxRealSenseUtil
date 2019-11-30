@@ -8,7 +8,7 @@ namespace ofxRealSenseUtil {
 	class Grabber : public Server {
 	public:
 		Grabber() : Grabber({ rsDepthRes, rsColorRes, true, true, 0 }) {}
-		Grabber(const Settings& s) {
+		Grabber(const Settings& s) : Server("realsense_grabber") {
 			refreshConfig(s);
 		}
 	};
@@ -16,7 +16,7 @@ namespace ofxRealSenseUtil {
 	class Recorder : public Server {
 	public:
 		Recorder() : Recorder({ rsDepthRes, rsColorRes, true, true, 0 }) {}
-		Recorder(const Settings& s) {
+		Recorder(const Settings& s) : Server("realsense_recorder") {
 			refreshConfig(s);
 			defaultSettings = s;
 		}
@@ -57,8 +57,8 @@ namespace ofxRealSenseUtil {
 
 	class Player : public Server {
 	public:
-		Player(const std::string& path) : Player({ rsDepthRes, rsColorRes, true, true, -1 }, path) {}
-		Player(const Settings& s, const std::string& path) {
+		Player(const std::string& path) : Player({ rsDepthRes, rsColorRes, false, false, -1 }, path) {}
+		Player(const Settings& s, const std::string& path) : Server("realsense_player_" + path) {
 			refreshConfig(s);
 			// Enable reading from file
 			config.enable_device_from_file("data/" + path);
@@ -70,20 +70,22 @@ namespace ofxRealSenseUtil {
 			device.as<rs2::playback>().resume();
 		}
 		void seek(double percent) {
-			waitForThread(true);
 			auto& playback = device.as<rs2::playback>();
 			if (playback.current_status() != RS2_PLAYBACK_STATUS_STOPPED) {
-				auto duration = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(playback.get_duration());
+				auto duration = std::chrono::duration_cast<std::chrono::duration<double, std::nano>>(playback.get_duration());
 				duration.count();
-				auto seekTime = std::chrono::duration<double, std::milli>(percent * duration.count());
-				playback.seek(std::chrono::duration_cast<std::chrono::milliseconds>(seekTime));
+				auto seekTime = std::chrono::duration<double, std::nano>(percent * duration.count());
+				playback.seek(std::chrono::duration_cast<std::chrono::nanoseconds>(seekTime));
 			}
 		}
-		double getProgress() {
-			auto& playback = device.as<rs2::playback>();
-			int count = playback.get_duration().count(); // default unit is nanoseconds
-			int currentPoistion = playback.get_position();
-			return (1. * currentPoistion) / count;
+		double getProgress() const {
+			return (1. * getPosition()) / getDuration();
+		}
+		int64_t getDuration() const {
+			return device.as<rs2::playback>().get_duration().count();
+		}
+		uint64_t getPosition() const {
+			return device.as<rs2::playback>().get_position();
 		}
 	};
 };

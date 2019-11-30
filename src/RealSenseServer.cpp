@@ -2,7 +2,8 @@
 
 using namespace ofxRealSenseUtil;
 
-Server::Server() {
+Server::Server(const std::string& name) {
+	rsParams.setName(name);
 	rsParams.add(filters.getParameters());
 	depthMeshParams.setName("depthMeshParams");
 	depthMeshParams.add(depthPixelSize.set("pixelSize", 10, 1, 100));

@@ -10,9 +10,14 @@ public:
 	void update();
 	void draw();
 	void exit();
-	void keyPressed(int key);
+
+	void onToggle(bool&);
+	void onStartPosChanged(float&);
 private:
 	ofPtr<ofxRealSenseUtil::Player> rs;
 	ofxPanel panel;
+	ofParameter<bool> isPlaying;
+	ofParameter<float> currentPosition;
+	ofParameter<float> startPosition;
 	ofEasyCam cam;
 };

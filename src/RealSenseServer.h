@@ -30,7 +30,7 @@ namespace ofxRealSenseUtil {
 
 	class Server : protected ofThread {
 	public:
-		Server();	
+		Server(const std::string& name);	
 		~Server();
 
 		void start();
