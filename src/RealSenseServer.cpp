@@ -99,6 +99,7 @@ void Server::threadedFunction() {
 		}
 
 		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
+		
 		auto& points = pc.calculate(depth);
 		if (checkFlags(USE_DEPTH_TEXTURE)) {
 			newFd.depthPix.setFromPixels(
@@ -128,14 +129,17 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 	
 	const rs2::vertex * vs = ps.get_vertices();
 	const rs2::texture_coordinate * texCoords = ps.get_texture_coordinates();
-	int pNum = ps.size();
-	
-	const int w = res.x;
-	const int h = res.y;
+
+	glm::ivec2 start(0, 0), end(res);
+	if (isClip) {
+		glm::vec2 scale = glm::vec2(res) / glm::vec2(rsDepthRes);
+		start = clipRect.position * scale;
+		end = clipRect.getBottomRight() * scale;
+	}
 		
-	for (int y = 0; y < h - pixelSize; y += pixelSize) {
-		for (int x = 0; x < w - pixelSize; x += pixelSize) {
-			int i = y * w + x;
+	for (int y = start.y + pixelSize; y < end.y - pixelSize; y += pixelSize) {
+		for (int x = start.x + pixelSize; x < end.x - pixelSize; x += pixelSize) {
+			int i = y * res.x + x;
 			const auto& v = vs[i];
 			const auto& uv = texCoords[i];
 

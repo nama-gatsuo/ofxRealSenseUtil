@@ -52,6 +52,7 @@ namespace ofxRealSenseUtil {
 
 		void setDepthRes(int p) { depthPixelSize.set(p); }
 		void setClipRect(const ofRectangle& rect) { clipRect = rect; }
+		const ofRectangle& getClipRect() const { return clipRect; }
 		ofParameterGroup& getParameters() { return rsParams; }
 
 	protected:
