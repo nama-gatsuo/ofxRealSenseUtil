@@ -31,7 +31,7 @@ namespace ofxRealSenseUtil {
 	class Server : protected ofThread {
 	public:
 		Server(const std::string& name);	
-		~Server();
+		virtual ~Server();
 
 		void start();
 		void stop();
