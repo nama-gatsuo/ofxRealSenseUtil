@@ -8,7 +8,7 @@ namespace ofxRealSenseUtil {
 			true,
 			true,
 			0,
-			USE_TEXTURE_COLOR | USE_TEXTURE_COLOR,
+			USE_TEXTURE_DEPTH | USE_TEXTURE_COLOR,
 			true
 		});
 	}
