@@ -10,27 +10,16 @@
 
 namespace ofxRealSenseUtil {
 
-	const static glm::ivec2 rsDepthRes(1280, 720);
-	const static glm::ivec2 rsColorRes(1280, 720);
-
 	enum UseFlag {
-		USE_COLOR_TEXTURE = (1 << 0),
-		USE_DEPTH_TEXTURE = (1 << 1),
-		USE_DEPTH_MESH_POINTCLOUD = (1 << 2),
-		USE_DEPTH_MESH_POLYGON = (1 << 3)
-	}; 
-
-	struct Settings {
-		glm::ivec2 depthRes;
-		glm::ivec2 colorRes;
-		bool useColor;
-		bool useDepth;
-		int deviceId;
+		USE_TEXTURE_COLOR = (1 << 0),
+		USE_TEXTURE_DEPTH = (1 << 1),
+		USE_MESH_POINTCLOUD = (1 << 2),
+		USE_MESH_POLYGON = (1 << 3)
 	};
 
 	class Server : protected ofThread {
 	public:
-		Server(const std::string& name);	
+		Server(const std::string& name);
 		virtual ~Server();
 
 		void start();
@@ -45,8 +34,8 @@ namespace ofxRealSenseUtil {
 		bool checkFlags(unsigned char f) const { return (flags & f) != 0; }
 
 		// Accessors
-		const ofImage& getColorImage() const;
-		const ofFloatImage& getDepthImage() const;
+		const ofTexture& getColorTex() const;
+		const ofTexture& getDepthTex() const;
 		const ofVboMesh& getPointCloud() const;
 		const ofVboMesh& getPolygonMesh() const;
 
@@ -59,7 +48,9 @@ namespace ofxRealSenseUtil {
 		rs2::device device;
 		rs2::config config;
 		ofPtr<rs2::pipeline> pipe;
-		void refreshConfig(const Settings& source);
+		bool bOpen;
+		// unsignd char has 8 bits so it can have 8 flags.
+		unsigned char flags;
 
 	private:
 		void threadedFunction() override;
@@ -85,12 +76,9 @@ namespace ofxRealSenseUtil {
 
 		ofVboMesh meshPointCloud;
 		ofVboMesh meshPolygon;
-		ofImage colorImage;
-		ofFloatImage depthImage;
+		ofTexture colorTex;
+		ofTexture depthTex;
 		bool isNewFrame;
-
-		// unsignd char has 8 bits so it can have 8 falgs.
-		unsigned char flags;
 
 		ofPtr<ofThreadChannel<bool>> request;
 		ofPtr<ofThreadChannel<FrameData>> response;

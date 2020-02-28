@@ -14,7 +14,7 @@ Polygon-meshing
   * Using the installer (Intel.RealSense.SDK.exe) is recommended
 
 ## Feature
-* Polygon (triangulated geometry) creation
+* Polygon (triangulated geometry) creation with texture
 * Data creation *in a separated thread*
 * Record to / playback from `.bag` files
 

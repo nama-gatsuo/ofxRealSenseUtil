@@ -5,7 +5,7 @@ void ofApp::setup() {
 	ofSetFrameRate(30);
 	ofBackground(0);
 
-	rs.enableFlags(ofxRealSenseUtil::USE_COLOR_TEXTURE | ofxRealSenseUtil::USE_DEPTH_TEXTURE);
+	rs.open();
 	rs.start();
 
 	binarizeShader.load("shader/binarize");
@@ -33,7 +33,7 @@ void ofApp::update() {
 	{
 		binarizeShader.begin();
 		binarizeShader.setUniform1f("zThres", zThres.get());
-		binarizeShader.setUniformTexture("input", rs.getDepthImage().getTexture(), 0);
+		binarizeShader.setUniformTexture("input", rs.getDepthTex(), 0);
 		ofDrawRectangle(rect.getRect());
 		binarizeShader.end();
 	}
@@ -60,7 +60,7 @@ void ofApp::update() {
 
 void ofApp::draw() {
 	
-	rs.getDepthImage().draw(0, 0, 640, 360);
+	rs.getDepthTex().draw(0, 0, 640, 360);
 	ofDrawBitmapStringHighlight("raw depth", 2, 16);
 	
 	binarizedImage.draw(640, 0, 640, 360);
@@ -69,7 +69,7 @@ void ofApp::draw() {
 	}
 	ofDrawBitmapStringHighlight("binarized image", 642, 16);
 
-	rs.getColorImage().draw(0, 360, 640, 360);
+	rs.getColorTex().draw(0, 360, 640, 360);
 	ofDrawBitmapStringHighlight("raw color", 2, 376);
 
 	ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate()), 640 + 20, 360 + 20);

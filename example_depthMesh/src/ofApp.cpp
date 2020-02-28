@@ -15,7 +15,8 @@ void ofApp::setup() {
 	cam.setNearClip(0.);
 	cam.setFarClip(3000.);
 
-	rs.enableFlags(ofxRealSenseUtil::USE_DEPTH_MESH_POLYGON | ofxRealSenseUtil::USE_COLOR_TEXTURE);
+	rs.open();
+	rs.enableFlags(ofxRealSenseUtil::USE_MESH_POLYGON);
 	rs.setClipRect(ofRectangle(glm::vec2((1280 - 480) / 2, (720 - 480) / 2), 480, 480));
 	rs.start();
 
@@ -51,7 +52,7 @@ void ofApp::draw() {
 		clipShader.setUniform4f("clipPlane2", glm::vec4(0, 0, 1, 0));
 		clipShader.setUniform1f("offsetY", offsetY);
 		clipShader.setUniform1f("clipZ", clipZ);
-		clipShader.setUniformTexture("tex", rs.getColorImage(), 0);
+		clipShader.setUniformTexture("tex", rs.getColorTex(), 0);
 
 		ofPushMatrix();
 		ofScale(500.);

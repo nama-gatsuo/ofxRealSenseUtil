@@ -1,4 +1,4 @@
-#include "RealSenseServer.h"
+#include "rsServer.h"
 
 using namespace ofxRealSenseUtil;
 
@@ -14,19 +14,25 @@ Server::Server(const std::string& name) {
 Server::~Server() {}
 
 void Server::start() {
+	if (!bOpen) {
+		ofLogError(__FUNCTION__) << "Not opened yet.";
+		return;
+	}
 	request = std::make_shared<ofThreadChannel<bool>>();
 	response = std::make_shared<ofThreadChannel<FrameData>>();
-	pipe->start(config);
-	device = pipe->get_active_profile().get_device();
-	ofLogNotice("ofxRealSenseUtil") << "Start: " << device.get_info(RS2_CAMERA_INFO_NAME);
+	device = pipe->start(config).get_device();
+
+	ofLogNotice(__FUNCTION__) << "info: " << device.get_info(RS2_CAMERA_INFO_NAME);
 	startThread();
 }
 
 void Server::stop() {
+
 	request->close();
 	response->close();
+	
 	waitForThread(true);
-	stopThread();
+	
 	pipe->stop();
 }
 
@@ -40,39 +46,21 @@ void Server::update() {
 	}
 
 	if (isNewFrame) {
-		if (checkFlags(USE_COLOR_TEXTURE)) colorImage.setFromPixels(fd.colorPix);
-		if (checkFlags(USE_DEPTH_TEXTURE)) depthImage.setFromPixels(fd.depthPix);
-		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) meshPointCloud = fd.meshPointCloud;
-		if (checkFlags(USE_DEPTH_MESH_POLYGON)) meshPolygon = fd.meshPolygon;
-	}
-
-}
-
-void Server::refreshConfig(const Settings& s) {
-	config = rs2::config();
-	pipe = std::make_shared<rs2::pipeline>();
-
-	if (s.deviceId != -1) {
-		rs2::context ctx;
-		rs2::device_list deviceList = ctx.query_devices();
-
-		if (deviceList.size() == 0) {
-			//throw std::runtime_error("No device detected. Is it plugged in?");
-			ofLogWarning("ofxRealSenseUtil") << "No device detected. Is realsense plugged in?";
-		} else if (deviceList.size() <= s.deviceId) {
-			ofLogWarning("ofxRealSenseUtil") << "Device id (" << s.deviceId << ") is not available.";
-		} else {
-			device = deviceList[s.deviceId];
-			const std::string& deviceSerial = device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-			config.enable_device(deviceSerial);
-			ofLogNotice("ofxRealSenseUtil") << deviceSerial << " is active!";
+		if (checkFlags(USE_TEXTURE_COLOR)) {
+			if (!colorTex.isAllocated()) {
+				colorTex.allocate(fd.colorPix.getWidth(), fd.colorPix.getHeight(), GL_RGB8);
+			}
+			colorTex.loadData(fd.colorPix);
+		} 
+		if (checkFlags(USE_TEXTURE_DEPTH)) {
+			if (!depthTex.isAllocated()) {
+				depthTex.allocate(fd.depthPix.getWidth(), fd.depthPix.getHeight(), GL_RGB32F);
+			}
+			depthTex.loadData(fd.depthPix);
 		}
-	} else {
-		ofLogNotice("ofxRealSenseUtil") << "Device is not set.";
+		if (checkFlags(USE_MESH_POINTCLOUD)) meshPointCloud = fd.meshPointCloud;
+		if (checkFlags(USE_MESH_POLYGON)) meshPolygon = fd.meshPolygon;
 	}
-
-	if (s.useDepth) config.enable_stream(RS2_STREAM_DEPTH, s.depthRes.x, s.depthRes.y, RS2_FORMAT_Z16, 30);
-	if (s.useColor) config.enable_stream(RS2_STREAM_COLOR, s.colorRes.x, s.colorRes.y, RS2_FORMAT_RGB8, 30);
 
 }
 
@@ -91,7 +79,7 @@ void Server::threadedFunction() {
 		pc.map_to(color);
 		filters.filter(depth);
 
-		if (checkFlags(USE_COLOR_TEXTURE)) {
+		if (checkFlags(USE_TEXTURE_COLOR)) {
 			newFd.colorPix.setFromPixels(
 				(unsigned char*)color.get_data(),
 				color.get_width(), color.get_height(), OF_IMAGE_COLOR
@@ -101,17 +89,17 @@ void Server::threadedFunction() {
 		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
 		
 		auto& points = pc.calculate(depth);
-		if (checkFlags(USE_DEPTH_TEXTURE)) {
+		if (checkFlags(USE_TEXTURE_DEPTH)) {
 			newFd.depthPix.setFromPixels(
 				(float*)points.get_vertices(),
 				depthRes.x, depthRes.y, OF_IMAGE_COLOR
 			);
 		}
 		
-		if (checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
+		if (checkFlags(USE_MESH_POINTCLOUD)) {
 			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get());
 		}
-		if (checkFlags(USE_DEPTH_MESH_POLYGON)) {
+		if (checkFlags(USE_MESH_POLYGON)) {
 			createMesh(newFd.meshPolygon, points, depthRes, depthPixelSize.get());
 		}
 
@@ -132,11 +120,10 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 
 	glm::ivec2 start(0, 0), end(res);
 	if (isClip) {
-		glm::vec2 scale = glm::vec2(res) / glm::vec2(rsDepthRes);
-		start = clipRect.position * scale;
-		end = clipRect.getBottomRight() * scale;
+		start = glm::max(glm::ivec2(clipRect.position), glm::ivec2(0));
+		end = glm::min(glm::ivec2(clipRect.getBottomRight()), res);
 	}
-		
+	
 	for (int y = start.y + pixelSize; y < end.y - pixelSize; y += pixelSize) {
 		for (int x = start.x + pixelSize; x < end.x - pixelSize; x += pixelSize) {
 			int i = y * res.x + x;
@@ -163,9 +150,8 @@ void Server::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& r
 
 	glm::ivec2 start(0, 0), end(res);
 	if (isClip) {
-		glm::vec2 scale = glm::vec2(res) / glm::vec2(rsDepthRes);
-		start = clipRect.position * scale;
-		end = clipRect.getBottomRight() * scale;
+		start = glm::max(glm::ivec2(clipRect.position), glm::ivec2(0));
+		end = glm::min(glm::ivec2(clipRect.getBottomRight()), res);
 	}
 	const glm::ivec2 numTexel = glm::abs(start - end) / pixelSize;
 
@@ -235,27 +221,27 @@ void Server::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& r
 	float endTime = ofGetElapsedTimef();
 }
 
-const ofImage& Server::getColorImage() const {
-	if (!checkFlags(USE_COLOR_TEXTURE)) {
-		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
+const ofTexture& Server::getColorTex() const {
+	if (!checkFlags(USE_TEXTURE_COLOR)) {
+		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
-	return colorImage;
+	return colorTex;
 }
-const ofFloatImage& Server::getDepthImage() const {
-	if (!checkFlags(USE_DEPTH_TEXTURE)) {
-		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
+const ofTexture& Server::getDepthTex() const {
+	if (!checkFlags(USE_TEXTURE_DEPTH)) {
+		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
-	return depthImage;
+	return depthTex;
 }
 const ofVboMesh& Server::getPointCloud() const {
-	if (!checkFlags(USE_DEPTH_MESH_POINTCLOUD)) {
-		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
+	if (!checkFlags(USE_MESH_POINTCLOUD)) {
+		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
 	return meshPointCloud;
 }
 const ofVboMesh& Server::getPolygonMesh() const {
-	if (!checkFlags(USE_DEPTH_MESH_POLYGON)) {
-		ofLogError("ofxRealSenseUtil") << "Target flag is disabled!";
+	if (!checkFlags(USE_MESH_POLYGON)) {
+		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
 	return meshPolygon;
 }

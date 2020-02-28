@@ -2,15 +2,16 @@
 
 void ofApp::setup() {
 	ofDisableArbTex();
+	ofSetFrameRate(60);
 
 	// A recorded file should be located in bin/data
-	// You can record via Realsense View or ofxRealSenseUtil::Recorder
-	rs = std::make_shared<ofxRealSenseUtil::Player>("20191124_145855.bag");
-	rs->enableFlags(ofxRealSenseUtil::USE_DEPTH_MESH_POLYGON | ofxRealSenseUtil::USE_COLOR_TEXTURE);
-	rs->start();
+	// You can record via Realsense View or ofxRealSenseUtil::Recorder	
+	rs.open("20191124_145855.bag");
+	rs.enableFlags(ofxRealSenseUtil::USE_MESH_POLYGON | ofxRealSenseUtil::USE_TEXTURE_COLOR);
+	rs.start();
 
 	panel.setup();
-	panel.add(rs->getParameters());
+	panel.add(rs.getParameters());
 	panel.add(currentPosition.set("current", 0.f, 0.f, 1.f));
 	panel.add(startPosition.set("startPos", 0.f, 0.f, 1.f));
 	panel.add(isPlaying.set("isPlaying", true));
@@ -20,18 +21,21 @@ void ofApp::setup() {
 }
 
 void ofApp::update() {
-	rs->update();
-	currentPosition.set(rs->getProgress());
+	rs.update();
+	currentPosition.set(rs.getProgress());
 }
 
 void ofApp::draw() {
 
 	cam.begin();
 	ofPushMatrix();
-	ofScale(500.);
-	rs->getColorImage().bind();
-	rs->getPolygonMesh().draw();
-	rs->getColorImage().unbind();
+	ofScale(500.f);
+
+	if (rs.getColorTex().isAllocated()) {
+		rs.getColorTex().bind();
+		rs.getPolygonMesh().draw();
+		rs.getColorTex().unbind();
+	}
 	ofPopMatrix();
 	cam.end();
 
@@ -41,15 +45,23 @@ void ofApp::draw() {
 }
 
 void ofApp::exit() {
-	rs->stop();
+	rs.stop();
+}
+
+void ofApp::keyPressed(int key) {
+	if (key == 'r') {
+		isPlaying = true;
+	} else if (key == 's') {
+		isPlaying = false;
+	}
 }
 
 void ofApp::onToggle(bool&) {
-	if (isPlaying) rs->resume();
-	else rs->pause();
+	if (isPlaying) rs.resume();
+	else rs.pause();
 }
 
 void ofApp::onStartPosChanged(float&) {
-	rs->seek(startPosition.get());
+	rs.seek(startPosition.get());
 }
 

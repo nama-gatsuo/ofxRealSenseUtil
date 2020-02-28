@@ -12,7 +12,7 @@ public:
 	void exit();
 	void keyPressed(int key);
 private:
-	ofPtr<ofxRealSenseUtil::Recorder> rs;
+	ofxRealSenseUtil::Device rs;
 	ofxPanel panel;
 	bool isRecording;
 };
