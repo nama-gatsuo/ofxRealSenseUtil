@@ -27,7 +27,7 @@ namespace ofxRealSenseUtil {
 
 		// Should be called in every frame to
 		// fetch data from other thread and prepare data such like ofVboMesh and ofTexture
-		void update();
+		virtual void update();
 
 		void enableFlags(unsigned char f) { flags |= f; }
 		void disableFlags(unsigned char f) { flags &= ~f; }
@@ -40,8 +40,6 @@ namespace ofxRealSenseUtil {
 		const ofVboMesh& getPolygonMesh() const;
 
 		void setDepthRes(int p) { depthPixelSize.set(p); }
-		void setClipRect(const ofRectangle& rect) { clipRect = rect; }
-		const ofRectangle& getClipRect() const { return clipRect; }
 		ofParameterGroup& getParameters() { return rsParams; }
 
 	protected:
@@ -51,6 +49,13 @@ namespace ofxRealSenseUtil {
 		bool bOpen;
 		// unsignd char has 8 bits so it can have 8 flags.
 		unsigned char flags;
+
+		ofParameterGroup rsParams;
+		ofParameterGroup depthMeshParams;
+		ofParameter<int> depthPixelSize;
+		ofParameter<bool> isClip;
+		ofParameter<glm::vec2> p0;
+		ofParameter<glm::vec2> p1;
 
 	private:
 		void threadedFunction() override;
@@ -64,12 +69,6 @@ namespace ofxRealSenseUtil {
 			ofFloatPixels depthPix;
 			ofPixels colorPix;
 		} fd;
-
-		ofParameterGroup rsParams;
-		ofParameterGroup depthMeshParams;
-		ofParameter<int> depthPixelSize;
-		ofParameter<bool> isClip;
-		ofRectangle clipRect;
 
 		rs2::frame_queue frameQueue;
 		rs2::pointcloud pc;

@@ -12,12 +12,6 @@ void ofApp::setup() {
 
 	panel.setup();
 	panel.add(rs.getParameters());
-	panel.add(currentPosition.set("current", 0.f, 0.f, 1.f));
-	panel.add(startPosition.set("startPos", 0.f, 0.f, 1.f));
-	panel.add(isPlaying.set("isPlaying", true));
-
-	isPlaying.addListener(this, &ofApp::onToggle);
-	startPosition.addListener(this, &ofApp::onStartPosChanged);
 }
 
 void ofApp::update() {
@@ -54,14 +48,5 @@ void ofApp::keyPressed(int key) {
 	} else if (key == 's') {
 		isPlaying = false;
 	}
-}
-
-void ofApp::onToggle(bool&) {
-	if (isPlaying) rs.resume();
-	else rs.pause();
-}
-
-void ofApp::onStartPosChanged(float&) {
-	rs.seek(startPosition.get());
 }
 

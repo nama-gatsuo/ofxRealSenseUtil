@@ -19,6 +19,5 @@ private:
 	ofxPanel panel;
 	ofParameter<bool> isPlaying;
 	ofParameter<float> currentPosition;
-	ofParameter<float> startPosition;
 	ofEasyCam cam;
 };

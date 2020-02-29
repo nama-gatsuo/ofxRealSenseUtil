@@ -7,8 +7,10 @@ Server::Server(const std::string& name) {
 	rsParams.add(filters.getParameters());
 	depthMeshParams.setName("depthMeshParams");
 	depthMeshParams.add(depthPixelSize.set("pixelSize", 10, 1, 100));
+	depthMeshParams.add(isClip.set("enableClip", false));
+	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
+	depthMeshParams.add(p1.set("clip_p1", glm::vec2(1280, 720), glm::vec2(0), glm::vec2(1280, 720)));
 	rsParams.add(depthMeshParams);
-	rsParams.add(isClip.set("enableClip", false));
 }
 
 Server::~Server() {}
@@ -120,8 +122,8 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 
 	glm::ivec2 start(0, 0), end(res);
 	if (isClip) {
-		start = glm::max(glm::ivec2(clipRect.position), glm::ivec2(0));
-		end = glm::min(glm::ivec2(clipRect.getBottomRight()), res);
+		start = glm::max(glm::ivec2(p0.get()), glm::ivec2(0));
+		end = glm::min(glm::ivec2(p1.get()), res);
 	}
 	
 	for (int y = start.y + pixelSize; y < end.y - pixelSize; y += pixelSize) {
@@ -150,8 +152,8 @@ void Server::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& r
 
 	glm::ivec2 start(0, 0), end(res);
 	if (isClip) {
-		start = glm::max(glm::ivec2(clipRect.position), glm::ivec2(0));
-		end = glm::min(glm::ivec2(clipRect.getBottomRight()), res);
+		start = glm::max(glm::ivec2(p0.get()), glm::ivec2(0));
+		end = glm::min(glm::ivec2(p1.get()), res);
 	}
 	const glm::ivec2 numTexel = glm::abs(start - end) / pixelSize;
 
