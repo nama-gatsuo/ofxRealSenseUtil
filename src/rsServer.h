@@ -29,15 +29,19 @@ namespace ofxRealSenseUtil {
 		// fetch data from other thread and prepare data such like ofVboMesh and ofTexture
 		virtual void update();
 
-		void enableFlags(unsigned char f) { flags |= f; }
-		void disableFlags(unsigned char f) { flags &= ~f; }
-		bool checkFlags(unsigned char f) const { return (flags & f) != 0; }
+		void enableFlags(uint8_t f) { flags |= f; }
+		void disableFlags(uint8_t f) { flags &= ~f; }
+		bool checkFlags(uint8_t f) const { return (flags & f) != 0; }
 
-		// Accessors
+		// Const accessors
 		const ofTexture& getColorTex() const;
 		const ofTexture& getDepthTex() const;
 		const ofVboMesh& getPointCloud() const;
 		const ofVboMesh& getPolygonMesh() const;
+
+		// Non-const accessors
+		ofVboMesh& getPointCloud() { return const_cast<ofVboMesh&>(const_cast<const Server*>(this)->getPointCloud()); }
+		ofVboMesh& getPolygonMesh() { return const_cast<ofVboMesh&>(const_cast<const Server*>(this)->getPolygonMesh()); }
 
 		void setDepthRes(int p) { depthPixelSize.set(p); }
 		ofParameterGroup& getParameters() { return rsParams; }
@@ -47,8 +51,8 @@ namespace ofxRealSenseUtil {
 		rs2::config config;
 		ofPtr<rs2::pipeline> pipe;
 		bool bOpen;
-		// unsignd char has 8 bits so it can have 8 flags.
-		unsigned char flags;
+		// uint8_t has 8 bits so it can have 8 flags.
+		uint8_t flags;
 
 		ofParameterGroup rsParams;
 		ofParameterGroup depthMeshParams;
