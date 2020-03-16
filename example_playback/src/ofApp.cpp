@@ -4,19 +4,23 @@ void ofApp::setup() {
 	ofDisableArbTex();
 	ofSetFrameRate(60);
 
+	// Accessing parameters in ofxRealSenseUtil via ofParameterGroup
+	auto& rsParams = rs.getParameters();
+	auto& dParams = rsParams[rsParams.getPosition("depthMeshParams")].castGroup();
+	dParams[dParams.getPosition("useColorTexture")].cast<bool>() = true;
+	dParams[dParams.getPosition("usePolygonMesh")].cast<bool>() = true;
+
 	// A recorded file should be located in bin/data
-	// You can record via Realsense View or ofxRealSenseUtil::Recorder	
+	// You can record via Realsense Viewer or ofxRealSenseUtil::Recorder		
 	rs.open("20191124_145855.bag");
-	rs.enableFlags(ofxRealSenseUtil::USE_MESH_POLYGON | ofxRealSenseUtil::USE_TEXTURE_COLOR);
 	rs.start();
 
 	panel.setup();
-	panel.add(rs.getParameters());
+	panel.add(rsParams);
 }
 
 void ofApp::update() {
 	rs.update();
-	currentPosition.set(rs.getProgress());
 }
 
 void ofApp::draw() {

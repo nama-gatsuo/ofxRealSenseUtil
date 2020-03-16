@@ -13,7 +13,6 @@ namespace ofxRealSenseUtil {
 			bool useColorSensor;
 			bool useDepthSensor;
 			int deviceId;
-			int createMeshFlags; // Set via UseFlag enum value with bit operators
 			bool autoExposure;
 		};
 

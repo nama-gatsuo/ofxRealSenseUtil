@@ -11,11 +11,14 @@ namespace ofxRealSenseUtil {
 			playerGroup.add(seekValue.set("seek", 0.f, 0.f, 1.f));
 			playerGroup.add(progress.set("progress", 0.f, 0.f, 1.f));
 			seekValue.addListener(this, &Player::onSeek);
+			seekValue.disableEvents();
 			isPause.addListener(this, &Player::onToggle);
+			isPause.disableEvents();
 			rsParams.add(playerGroup);
 		}
-		Player(const std::string& name) : Server(name) {
+		~Player() {
 			seekValue.removeListener(this, &Player::onSeek);
+			isPause.removeListener(this, &Player::onToggle);
 		}
 
 		void update() override {
@@ -28,6 +31,9 @@ namespace ofxRealSenseUtil {
 			// Enable reading from file
 			config.enable_device_from_file("data/" + filePath);
 			bOpen = true;
+
+			seekValue.enableEvents();
+			isPause.enableEvents();
 		}
 		void pause() {
 			device.as<rs2::playback>().pause();
@@ -55,6 +61,8 @@ namespace ofxRealSenseUtil {
 
 		// Event callbacks
 		void onSeek(float& percent) {
+			if (!bOpen || !isPlaying()) return;
+
 			auto& playback = device.as<rs2::playback>();
 			if (playback.current_status() != RS2_PLAYBACK_STATUS_STOPPED) {
 				auto duration = std::chrono::duration_cast<std::chrono::duration<double, std::nano>>(playback.get_duration());
@@ -65,6 +73,8 @@ namespace ofxRealSenseUtil {
 		}
 
 		void onToggle(bool&) {
+			if (!bOpen || !isPlaying()) return;
+			
 			if (isPause) pause();
 			else resume();
 		}

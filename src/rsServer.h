@@ -10,13 +10,6 @@
 
 namespace ofxRealSenseUtil {
 
-	enum UseFlag {
-		USE_TEXTURE_COLOR = (1 << 0),
-		USE_TEXTURE_DEPTH = (1 << 1),
-		USE_MESH_POINTCLOUD = (1 << 2),
-		USE_MESH_POLYGON = (1 << 3)
-	};
-
 	class Server : protected ofThread {
 	public:
 		Server(const std::string& name);
@@ -24,14 +17,11 @@ namespace ofxRealSenseUtil {
 
 		void start();
 		void stop();
-
+		bool isPlaying() const { return bPlaying; }
+		
 		// Should be called in every frame to
 		// fetch data from other thread and prepare data such like ofVboMesh and ofTexture
 		virtual void update();
-
-		void enableFlags(uint8_t f) { flags |= f; }
-		void disableFlags(uint8_t f) { flags &= ~f; }
-		bool checkFlags(uint8_t f) const { return (flags & f) != 0; }
 
 		// Const accessors
 		const ofTexture& getColorTex() const;
@@ -51,8 +41,12 @@ namespace ofxRealSenseUtil {
 		rs2::config config;
 		ofPtr<rs2::pipeline> pipe;
 		bool bOpen;
-		// uint8_t has 8 bits so it can have 8 flags.
-		uint8_t flags;
+		bool bPlaying;
+
+		ofParameter<bool> usePolygonMesh;
+		ofParameter<bool> usePointCloud;
+		ofParameter<bool> useDepthTexture;
+		ofParameter<bool> useColorTexture;
 
 		ofParameterGroup rsParams;
 		ofParameterGroup depthMeshParams;

@@ -5,11 +5,10 @@ void ofApp::setup() {
 	s.depthRes = glm::vec2(640, 480);
 	s.colorRes = glm::vec2(640, 480);
 	s.deviceId = 0;
-	s.useColor = true;
-	s.useDepth = true;
-	s.createFlags = ofxRealSenseUtil::USE_TEXTURE_DEPTH | ofxRealSenseUtil::USE_TEXTURE_COLOR;
+	s.useColorSensor = true;
+	s.useDepthSensor = true;
 	s.autoExposure = true;
-
+	
 	rs.open(s);
 	rs.start();
 

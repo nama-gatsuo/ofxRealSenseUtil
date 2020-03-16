@@ -2,10 +2,14 @@
 
 using namespace ofxRealSenseUtil;
 
-Server::Server(const std::string& name) {
+Server::Server(const std::string& name) : bPlaying(false) {
 	rsParams.setName(name);
 	rsParams.add(filters.getParameters());
 	depthMeshParams.setName("depthMeshParams");
+	depthMeshParams.add(useColorTexture.set("useColorTexture", true));
+	depthMeshParams.add(useDepthTexture.set("useDepthTexture", false));
+	depthMeshParams.add(usePointCloud.set("usePointCloud", false));
+	depthMeshParams.add(usePolygonMesh.set("usePolygonMesh", true));
 	depthMeshParams.add(depthPixelSize.set("pixelSize", 10, 1, 100));
 	depthMeshParams.add(isClip.set("enableClip", false));
 	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
@@ -22,20 +26,28 @@ void Server::start() {
 	}
 	request = std::make_shared<ofThreadChannel<bool>>();
 	response = std::make_shared<ofThreadChannel<FrameData>>();
-	device = pipe->start(config).get_device();
 
-	ofLogNotice(__FUNCTION__) << "info: " << device.get_info(RS2_CAMERA_INFO_NAME);
+	try {
+		device = pipe->start(config).get_device();
+		ofLogNotice(__FUNCTION__) << "start: " << device.get_info(RS2_CAMERA_INFO_NAME);
+	} catch (const rs2::error& e) {
+		ofLogError(__FUNCTION__) << e.what();
+	}
+
 	startThread();
+	bPlaying = true;
 }
 
 void Server::stop() {
-
+	bPlaying = false;
 	request->close();
 	response->close();
 	
 	waitForThread(true);
 	
 	pipe->stop();
+
+	ofLogNotice(__FUNCTION__) << "stop: " << device.get_info(RS2_CAMERA_INFO_NAME);
 }
 
 void Server::update() {
@@ -48,20 +60,20 @@ void Server::update() {
 	}
 
 	if (isNewFrame) {
-		if (checkFlags(USE_TEXTURE_COLOR)) {
+		if (useColorTexture) {
 			if (!colorTex.isAllocated()) {
 				colorTex.allocate(fd.colorPix.getWidth(), fd.colorPix.getHeight(), GL_RGB8);
 			}
 			colorTex.loadData(fd.colorPix);
 		} 
-		if (checkFlags(USE_TEXTURE_DEPTH)) {
+		if (useDepthTexture) {
 			if (!depthTex.isAllocated()) {
 				depthTex.allocate(fd.depthPix.getWidth(), fd.depthPix.getHeight(), GL_RGB32F);
 			}
 			depthTex.loadData(fd.depthPix);
 		}
-		if (checkFlags(USE_MESH_POINTCLOUD)) meshPointCloud = fd.meshPointCloud;
-		if (checkFlags(USE_MESH_POLYGON)) meshPolygon = fd.meshPolygon;
+		if (usePointCloud) meshPointCloud = fd.meshPointCloud;
+		if (usePolygonMesh) meshPolygon = fd.meshPolygon;
 	}
 
 }
@@ -81,7 +93,7 @@ void Server::threadedFunction() {
 		pc.map_to(color);
 		filters.filter(depth);
 
-		if (checkFlags(USE_TEXTURE_COLOR)) {
+		if (useColorTexture) {
 			newFd.colorPix.setFromPixels(
 				(unsigned char*)color.get_data(),
 				color.get_width(), color.get_height(), OF_IMAGE_COLOR
@@ -91,17 +103,17 @@ void Server::threadedFunction() {
 		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
 		
 		auto& points = pc.calculate(depth);
-		if (checkFlags(USE_TEXTURE_DEPTH)) {
+		if (useDepthTexture) {
 			newFd.depthPix.setFromPixels(
 				(float*)points.get_vertices(),
 				depthRes.x, depthRes.y, OF_IMAGE_COLOR
 			);
 		}
 		
-		if (checkFlags(USE_MESH_POINTCLOUD)) {
+		if (usePointCloud) {
 			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get());
 		}
-		if (checkFlags(USE_MESH_POLYGON)) {
+		if (usePolygonMesh) {
 			createMesh(newFd.meshPolygon, points, depthRes, depthPixelSize.get());
 		}
 
@@ -224,25 +236,25 @@ void Server::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& r
 }
 
 const ofTexture& Server::getColorTex() const {
-	if (!checkFlags(USE_TEXTURE_COLOR)) {
+	if (!useColorTexture) {
 		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
 	return colorTex;
 }
 const ofTexture& Server::getDepthTex() const {
-	if (!checkFlags(USE_TEXTURE_DEPTH)) {
+	if (!useDepthTexture) {
 		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
 	return depthTex;
 }
 const ofVboMesh& Server::getPointCloud() const {
-	if (!checkFlags(USE_MESH_POINTCLOUD)) {
+	if (!usePointCloud) {
 		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
 	return meshPointCloud;
 }
 const ofVboMesh& Server::getPolygonMesh() const {
-	if (!checkFlags(USE_MESH_POLYGON)) {
+	if (!usePolygonMesh) {
 		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
 	return meshPolygon;

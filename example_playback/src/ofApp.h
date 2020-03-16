@@ -18,6 +18,5 @@ private:
 	ofxRealSenseUtil::Player rs;
 	ofxPanel panel;
 	ofParameter<bool> isPlaying;
-	ofParameter<float> currentPosition;
 	ofEasyCam cam;
 };

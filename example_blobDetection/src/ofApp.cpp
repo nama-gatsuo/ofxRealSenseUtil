@@ -5,6 +5,14 @@ void ofApp::setup() {
 	ofSetFrameRate(30);
 	ofBackground(0);
 
+	// Accessing parameters in ofxRealSenseUtil via ofParameterGroup
+	auto& rsParams = rs.getParameters();
+	auto& dParams = rsParams[rsParams.getPosition("depthMeshParams")].castGroup();
+	dParams[dParams.getPosition("useColorTexture")].cast<bool>() = true;
+	dParams[dParams.getPosition("useDepthTexture")].cast<bool>() = true;
+	dParams[dParams.getPosition("usePointCloud")].cast<bool>() = false;
+	dParams[dParams.getPosition("usePolygonMesh")].cast<bool>() = false;
+
 	rs.open();
 	rs.start();
 

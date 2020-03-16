@@ -8,7 +8,6 @@ namespace ofxRealSenseUtil {
 			true,
 			true,
 			0,
-			USE_TEXTURE_DEPTH | USE_TEXTURE_COLOR,
 			true
 		});
 	}
@@ -16,7 +15,6 @@ namespace ofxRealSenseUtil {
 		defaultSettings = s;
 
 		refreshConfig(defaultSettings);
-		flags = defaultSettings.createMeshFlags;
 
 		bOpen = true;
 	}

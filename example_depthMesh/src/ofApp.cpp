@@ -16,12 +16,16 @@ void ofApp::setup() {
 	cam.setFarClip(3000.);
 
 	rs.open();
-	rs.enableFlags(ofxRealSenseUtil::USE_MESH_POLYGON);
-	rs.setClipRect(ofRectangle(glm::vec2((1280 - 480) / 2, (720 - 480) / 2), 480, 480));
 	rs.start();
 
+	// Accessing parameters in ofxRealSenseUtil via ofParameterGroup
+	auto& rsParams = rs.getParameters();
+	auto& dParams = rsParams[rsParams.getPosition("depthMeshParams")].castGroup();
+	dParams[dParams.getPosition("useColorTexture")].cast<bool>() = true;
+	dParams[dParams.getPosition("usePolygonMesh")].cast<bool>() = true;
+
 	panel.setup();
-	panel.add(rs.getParameters());
+	panel.add(rsParams);
 	panel.add(offsetY.set("offsetY", 0., -3.f, 3.f));
 	panel.add(clipZ.set("clipZ", 0., 0.f, 6.f));
 	panel.add(deferred.getParameters());
