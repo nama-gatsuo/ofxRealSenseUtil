@@ -2,7 +2,7 @@
 
 using namespace ofxRealSenseUtil;
 
-Server::Server(const std::string& name) : bPlaying(false) {
+Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	rsParams.setName(name);
 	rsParams.add(filters.getParameters());
 	depthMeshParams.setName("depthMeshParams");
@@ -51,15 +51,19 @@ void Server::stop() {
 }
 
 void Server::update() {
-	bool r = true;
-	request->send(r);
-	isNewFrame = false;
+	
+	if (bPlaying) {
+		bool r = true;
+		request->send(r);
+	}
+	
+	bNewFrame = false;
 
 	while (response->tryReceive(fd)) {
-		isNewFrame = true;
+		bNewFrame = true;
 	}
 
-	if (isNewFrame) {
+	if (bNewFrame) {
 		if (useColorTexture) {
 			if (!colorTex.isAllocated()) {
 				colorTex.allocate(fd.colorPix.getWidth(), fd.colorPix.getHeight(), GL_RGB8);

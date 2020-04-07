@@ -12,8 +12,6 @@ public:
 	void exit();
 	void keyPressed(int key);
 
-	void onToggle(bool&);
-	void onStartPosChanged(float&);
 private:
 	ofxRealSenseUtil::Player rs;
 	ofxPanel panel;

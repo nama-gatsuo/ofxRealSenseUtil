@@ -37,9 +37,11 @@ namespace ofxRealSenseUtil {
 		}
 		void pause() {
 			device.as<rs2::playback>().pause();
+			bPlaying = false;
 		}
 		void resume() {
 			device.as<rs2::playback>().resume();
+			bPlaying = true;
 		}
 
 		// Normalized value

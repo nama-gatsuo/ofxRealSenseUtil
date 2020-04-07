@@ -10,7 +10,7 @@
 
 namespace ofxRealSenseUtil {
 
-	class Server : protected ofThread {
+	class Server : public ofThread {
 	public:
 		Server(const std::string& name);
 		virtual ~Server();
@@ -18,6 +18,7 @@ namespace ofxRealSenseUtil {
 		void start();
 		void stop();
 		bool isPlaying() const { return bPlaying; }
+		bool isFrameNew() const { return bNewFrame; }
 		
 		// Should be called in every frame to
 		// fetch data from other thread and prepare data such like ofVboMesh and ofTexture
@@ -75,7 +76,7 @@ namespace ofxRealSenseUtil {
 		ofVboMesh meshPolygon;
 		ofTexture colorTex;
 		ofTexture depthTex;
-		bool isNewFrame;
+		bool bNewFrame;
 
 		ofPtr<ofThreadChannel<bool>> request;
 		ofPtr<ofThreadChannel<FrameData>> response;
