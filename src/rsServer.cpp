@@ -76,8 +76,12 @@ void Server::update() {
 			}
 			depthTex.loadData(fd.depthPix);
 		}
-		if (usePointCloud) meshPointCloud = fd.meshPointCloud;
-		if (usePolygonMesh) meshPolygon = fd.meshPolygon;
+		if (usePointCloud) {
+			meshPointCloud.clear();
+			meshPointCloud = std::move(fd.meshPointCloud);
+		}
+		if (usePolygonMesh) meshPolygon = std::move(fd.meshPolygon);
+		
 	}
 
 }
@@ -142,8 +146,8 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 		end = glm::min(glm::ivec2(p1.get()), res);
 	}
 	
-	for (int y = start.y + pixelSize; y < end.y - pixelSize; y += pixelSize) {
-		for (int x = start.x + pixelSize; x < end.x - pixelSize; x += pixelSize) {
+	for (int y = start.y + pixelSize; y < end.y; y += pixelSize) {
+		for (int x = start.x + pixelSize; x < end.x; x += pixelSize) {
 			int i = y * res.x + x;
 			const auto& v = vs[i];
 			const auto& uv = texCoords[i];

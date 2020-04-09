@@ -63,7 +63,7 @@ namespace ofxRealSenseUtil {
 
 		// Event callbacks
 		void onSeek(float& percent) {
-			if (!bOpen || !isPlaying()) return;
+			if (!bOpen) return;
 
 			auto& playback = device.as<rs2::playback>();
 			if (playback.current_status() != RS2_PLAYBACK_STATUS_STOPPED) {
@@ -75,7 +75,7 @@ namespace ofxRealSenseUtil {
 		}
 
 		void onToggle(bool&) {
-			if (!bOpen || !isPlaying()) return;
+			if (!bOpen) return;
 			
 			if (isPause) pause();
 			else resume();

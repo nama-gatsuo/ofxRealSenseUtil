@@ -38,7 +38,7 @@ void ofApp::draw() {
 	cam.end();
 
 	ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate()), 10, 16);
-	ofDrawBitmapString("key: [p] pause | [r] resume", 10, 32);
+	
 	panel.draw();
 }
 
@@ -47,10 +47,6 @@ void ofApp::exit() {
 }
 
 void ofApp::keyPressed(int key) {
-	if (key == 'r') {
-		isPlaying = true;
-	} else if (key == 's') {
-		isPlaying = false;
-	}
+	
 }
 
