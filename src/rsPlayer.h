@@ -10,10 +10,6 @@ namespace ofxRealSenseUtil {
 			playerGroup.add(isPause.set("pause", false));
 			playerGroup.add(seekValue.set("seek", 0.f, 0.f, 1.f));
 			playerGroup.add(progress.set("progress", 0.f, 0.f, 1.f));
-			seekValue.addListener(this, &Player::onSeek);
-			seekValue.disableEvents();
-			isPause.addListener(this, &Player::onToggle);
-			isPause.disableEvents();
 			rsParams.add(playerGroup);
 		}
 		~Player() {
@@ -27,11 +23,16 @@ namespace ofxRealSenseUtil {
 		}
 
 		void open(const std::string& filePath) {
+
+			this->fileName = filePath;
+
 			pipe = std::make_shared<rs2::pipeline>();
 			// Enable reading from file
 			config.enable_device_from_file("data/" + filePath);
 			bOpen = true;
 
+			seekValue.addListener(this, &Player::onSeek);
+			isPause.addListener(this, &Player::onToggle);
 			seekValue.enableEvents();
 			isPause.enableEvents();
 		}
@@ -65,6 +66,8 @@ namespace ofxRealSenseUtil {
 		void onSeek(float& percent) {
 			if (!bOpen) return;
 
+			ofLogNotice(__FUNCTION__) << fileName << ": seek - " << percent;
+
 			auto& playback = device.as<rs2::playback>();
 			if (playback.current_status() != RS2_PLAYBACK_STATUS_STOPPED) {
 				auto duration = std::chrono::duration_cast<std::chrono::duration<double, std::nano>>(playback.get_duration());
@@ -76,6 +79,8 @@ namespace ofxRealSenseUtil {
 
 		void onToggle(bool&) {
 			if (!bOpen) return;
+
+			ofLogNotice(__FUNCTION__) << fileName << ": " << (isPause ? "pause" : "resume");
 			
 			if (isPause) pause();
 			else resume();
@@ -87,5 +92,6 @@ namespace ofxRealSenseUtil {
 		ofParameter<float> seekValue;
 		ofParameter<float> startPos;
 		ofParameter<float> progress;
+		std::string fileName;
 	};
 };
