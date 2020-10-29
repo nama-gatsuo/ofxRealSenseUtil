@@ -70,7 +70,7 @@ void PostProcessingFilters::filter(rs2::frame& depthFrame) {
 	if (!depthFrame) return;
 
 	bool revert_disparity = false;
-	for (auto filter : filters) {
+	for (auto& filter : filters) {
 
 		if (filter.isEnabled) {
 			for (const auto& pair : filter.fParams) {

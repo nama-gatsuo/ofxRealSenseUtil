@@ -69,7 +69,7 @@ namespace ofxRealSenseUtil {
 			ofPixels colorPix;
 		} fd;
 
-		rs2::frame_queue frameQueue;
+		// rs2::frame_queue frameQueue;
 		rs2::pointcloud pc;
 
 		ofVboMesh meshPointCloud;

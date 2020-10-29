@@ -40,12 +40,13 @@ void ofApp::update() {
 
 void ofApp::draw() {
 	
+	int numAngle = 2;
+
 	auto drawFunc = [&](float lds, bool isShadow) {
 		glEnable(GL_CLIP_DISTANCE0);
 		glEnable(GL_CLIP_DISTANCE1);
 		glEnable(GL_CLIP_DISTANCE2);
-
-		int numAngle = 6;
+		
 		float t = PI / float(numAngle);
 
 		clipShader.begin();
@@ -62,9 +63,9 @@ void ofApp::draw() {
 		ofScale(500.);
 		ofTranslate(0, 0, 1.);
 		//rs.getPolygonMesh().draw();
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < numAngle; i++) {
 			ofPushMatrix();
-			ofRotateZ(60.f * i);
+			ofRotateZ(360.f / numAngle * i);
 			for (int k = 0; k < 2; k++) {
 				ofScale(1, 1, -1);
 				for (int j = 0; j < 2; j++) {
@@ -90,7 +91,7 @@ void ofApp::draw() {
 	sh->endShadowMap();
 
 	deferred.begin(cam, true);
-	drawFunc(1. / (cam.getFarClip() - cam.getNearClip()), false);
+	drawFunc(1.f / (cam.getFarClip() - cam.getNearClip()), false);
 	deferred.end();
 
 	//sh->debugDraw

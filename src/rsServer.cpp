@@ -32,6 +32,7 @@ void Server::start() {
 		ofLogNotice(__FUNCTION__) << "start: " << device.get_info(RS2_CAMERA_INFO_NAME);
 	} catch (const rs2::error& e) {
 		ofLogError(__FUNCTION__) << e.what();
+		return;
 	}
 
 	startThread();
@@ -71,7 +72,8 @@ void Server::update() {
 			colorTex.loadData(fd.colorPix);
 		} 
 		if (useDepthTexture) {
-			if (!depthTex.isAllocated()) {
+			if (!depthTex.isAllocated() ||
+				!depthTex.getWidth() != fd.depthPix.getWidth() || !depthTex.getHeight() != fd.depthPix.getHeight()) {
 				depthTex.allocate(fd.depthPix.getWidth(), fd.depthPix.getHeight(), GL_RGB32F);
 			}
 			depthTex.loadData(fd.depthPix);
@@ -97,7 +99,7 @@ void Server::threadedFunction() {
 		
 		auto& depth = frames.get_depth_frame();
 		auto& color = frames.get_color_frame();
-		
+
 		pc.map_to(color);
 		filters.filter(depth);
 
@@ -109,8 +111,10 @@ void Server::threadedFunction() {
 		}
 
 		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
-		
-		auto& points = pc.calculate(depth);
+
+		const auto& points = pc.calculate(depth);
+
+
 		if (useDepthTexture) {
 			newFd.depthPix.setFromPixels(
 				(float*)points.get_vertices(),
@@ -118,6 +122,8 @@ void Server::threadedFunction() {
 			);
 		}
 		
+
+
 		if (usePointCloud) {
 			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get());
 		}
